@@ -1,6 +1,8 @@
 package com.vietjoke.vn.Activities.Splash
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.window.SplashScreen
 import androidx.activity.compose.setContent
@@ -35,6 +37,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.vietjoke.vn.Activities.Login.LoginActivity
+import com.vietjoke.vn.Activities.SearchFlight.SearchFlightActivity
 import com.vietjoke.vn.MainActivity
 import com.vietjoke.vn.R
 
@@ -43,9 +46,18 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent{
-            SplashScreen(onGetStartedClick = {
-                startActivity(Intent(this, LoginActivity::class.java))
-            })
+            val sharedPreferences: SharedPreferences = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+            val isFirstTime = sharedPreferences.getBoolean("isFirstTime", true)
+
+            if (isFirstTime) {
+                sharedPreferences.edit().putBoolean("isFirstTime", false).apply()
+                SplashScreen(onGetStartedClick = {
+                    startActivity(Intent(this, SearchFlightActivity::class.java))
+                })
+            } else {
+                startActivity(Intent(this, SearchFlightActivity::class.java))
+                finish()
+            }
         }
     }
 }
