@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.espresso.core)
+    implementation(libs.androidx.core.i18n)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -71,9 +72,17 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0")
     implementation("androidx.compose.foundation:foundation:1.7.6")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
+    // Retrofit core
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
+
+// Kotlinx serialization converter for Retrofit
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:0.8.0")
+
+// Kotlinx JSON
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+// OkHttp 4.9.0+ (bắt buộc để có toMediaType)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
     implementation("androidx.compose.material:material-icons-extended:1.4.3")
 
 }
