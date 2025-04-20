@@ -9,19 +9,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Facebook
-
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,9 +36,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vietjoke.vn.Activities.Register.RegisterActivity
 import com.vietjoke.vn.R
-
-import retrofit2.Call
-import retrofit2.Callback
+import com.vietjoke.vn.retrofit.ResponseDTO.ErrorResponse
+import com.vietjoke.vn.retrofit.RetrofitInstance
+import com.vietjoke.vn.retrofit.ResponseDTO.LoginRequestDTO
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import okhttp3.ResponseBody
 import retrofit2.Response
 
 class LoginActivity : ComponentActivity() {
@@ -57,6 +56,7 @@ class LoginActivity : ComponentActivity() {
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen() {
@@ -64,6 +64,11 @@ fun LoginScreen() {
     var password by remember { mutableStateOf("") }
     var passwordVisibility by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
+    var usernameError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val json = Json { ignoreUnknownKeys = true }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -107,7 +112,10 @@ fun LoginScreen() {
 
                     OutlinedTextField(
                         value = username,
-                        onValueChange = { username = it },
+                        onValueChange = { 
+                            username = it
+                            usernameError = null
+                        },
                         label = { Text("Username", color = Color.Gray) },
                         leadingIcon = {
                             Icon(
@@ -116,6 +124,16 @@ fun LoginScreen() {
                                 tint = Color.Black
                             )
                         },
+                        isError = usernameError != null,
+                        supportingText = {
+                            if (usernameError != null) {
+                                Text(
+                                    text = usernameError!!,
+                                    color = Color.Red,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        },
                         colors = TextFieldDefaults.outlinedTextFieldColors(
                             containerColor = Color.White.copy(alpha = 0.8f),
                             focusedTextColor = Color.Black,
@@ -123,7 +141,10 @@ fun LoginScreen() {
                             unfocusedBorderColor = Color.LightGray,
                             focusedLabelColor = Color.Gray,
                             unfocusedLabelColor = Color.Gray,
-                            cursorColor = Color.Black
+                            cursorColor = Color.Black,
+                            errorBorderColor = Color.Red,
+                            errorLabelColor = Color.Red,
+                            errorCursorColor = Color.Red
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -136,7 +157,10 @@ fun LoginScreen() {
 
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = { 
+                            password = it
+                            passwordError = null
+                        },
                         label = { Text("Password", color = Color.Gray) },
                         visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -156,6 +180,16 @@ fun LoginScreen() {
                                 )
                             }
                         },
+                        isError = passwordError != null,
+                        supportingText = {
+                            if (passwordError != null) {
+                                Text(
+                                    text = passwordError!!,
+                                    color = Color.Red,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        },
                         colors = TextFieldDefaults.outlinedTextFieldColors(
                             containerColor = Color.White.copy(alpha = 0.8f),
                             focusedTextColor = Color.Black,
@@ -163,7 +197,10 @@ fun LoginScreen() {
                             unfocusedBorderColor = Color.LightGray,
                             focusedLabelColor = Color.Gray,
                             unfocusedLabelColor = Color.Gray,
-                            cursorColor = Color.Black
+                            cursorColor = Color.Black,
+                            errorBorderColor = Color.Red,
+                            errorLabelColor = Color.Red,
+                            errorCursorColor = Color.Red
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -210,7 +247,86 @@ fun LoginScreen() {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = { /* TODO: Handle login */ },
+                        onClick = {
+                            // Reset error states
+                            usernameError = null
+                            passwordError = null
+                            
+                            // Validate input fields
+                            var hasError = false
+                            
+                            if (username.isBlank()) {
+                                usernameError = "Username is required"
+                                hasError = true
+                            }
+                            
+                            if (password.isBlank()) {
+                                passwordError = "Password is required"
+                                hasError = true
+                            }
+                            
+                            if (!hasError) {
+                                coroutineScope.launch {
+                                    try {
+                                        val response = RetrofitInstance.authApi.login(
+                                            LoginRequestDTO(
+                                                identifier = username,
+                                                password = password
+                                            )
+                                        )
+                                        
+                                        if (response.isSuccessful) {
+                                            response.body()?.let { loginResponse ->
+                                                when (loginResponse.status) {
+                                                    200 -> {
+                                                        Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
+                                                        // TODO: Save token and navigate to main screen
+                                                        val intent = Intent(context, com.vietjoke.vn.Activities.Dashboard.DashboardActivity::class.java)
+                                                        context.startActivity(intent)
+                                                    }
+                                                    else -> {
+                                                        val errorMessage = loginResponse.errors?.firstOrNull()?.message 
+                                                            ?: loginResponse.message 
+                                                            ?: "Unknown error occurred"
+                                                        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            // Handle HTTP error responses
+                                            val errorBody = response.errorBody()?.string()
+                                            if (errorBody != null) {
+                                                try {
+                                                    val errorResponse = json.decodeFromString<ErrorResponse>(errorBody)
+                                                    when (errorResponse.status) {
+                                                        401 -> {
+
+                                                            Toast.makeText(context, "Wrong password", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                        404 -> {
+
+                                                            Toast.makeText(context, "User not found", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                        else -> {
+                                                            val errorMessage = errorResponse.errors?.firstOrNull()?.message 
+                                                                ?: errorResponse.message 
+                                                                ?: "Unknown error occurred"
+                                                            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Error: ${response.message()}", Toast.LENGTH_SHORT).show()
+                                                }
+                                            } else {
+                                                Toast.makeText(context, "Error: ${response.message()}", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Network error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(0.7f),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
@@ -251,7 +367,6 @@ fun LoginScreen() {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Facebook and Google buttons with icons
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -262,10 +377,10 @@ fun LoginScreen() {
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(16.dp)),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B5998)) // Facebook color
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B5998))
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Facebook, // Facebook icon
+                                imageVector = Icons.Filled.Facebook,
                                 contentDescription = "Facebook Icon",
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
@@ -284,11 +399,11 @@ fun LoginScreen() {
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(16.dp)),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDB4437)) // Google color
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDB4437))
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_google2), // Facebook icon
-                                contentDescription = "Facebook Icon",
+                                painter = painterResource(R.drawable.ic_google2),
+                                contentDescription = "Google Icon",
                                 tint = Color.Unspecified,
                                 modifier = Modifier.size(25.dp)
                             )
@@ -312,7 +427,6 @@ fun LoginScreen() {
                             fontSize = 14.sp
                         )
 
-                        val context = LocalContext.current
                         TextButton(onClick = {
                             val intent = Intent(context, RegisterActivity::class.java)
                             context.startActivity(intent)
@@ -327,7 +441,6 @@ fun LoginScreen() {
                     }
                 }
             }
-
         }
     }
 }

@@ -37,6 +37,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.vietjoke.vn.Activities.Login.LoginActivity
+import com.vietjoke.vn.Activities.Register.RegisterActivity
 import com.vietjoke.vn.Activities.SearchFlight.SearchFlightActivity
 import com.vietjoke.vn.MainActivity
 import com.vietjoke.vn.R
