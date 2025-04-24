@@ -25,6 +25,8 @@
         <activity
             android:name=".Activities.Login.LoginActivity"
             android:exported="false" />
+        <activity android:name=".Activities.FlightList.FlightListActivity"
+            android:exported="false"/>
         <activity
             android:name=".Activities.Splash.SplashActivity"
             android:exported="true" >

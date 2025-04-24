@@ -39,6 +39,8 @@ import com.vietjoke.vn.R
 import com.vietjoke.vn.retrofit.ResponseDTO.ErrorResponse
 import com.vietjoke.vn.retrofit.RetrofitInstance
 import com.vietjoke.vn.retrofit.ResponseDTO.LoginRequestDTO
+import com.vietjoke.vn.retrofit.ResponseDTO.SelectFlightRequestDTO
+import com.vietjoke.vn.retrofit.ResponseDTO.FlightSelectionDTO
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.ResponseBody
@@ -280,9 +282,42 @@ fun LoginScreen() {
                                                 when (loginResponse.status) {
                                                     200 -> {
                                                         Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
-                                                        // TODO: Save token and navigate to main screen
-                                                        val intent = Intent(context, com.vietjoke.vn.Activities.Dashboard.DashboardActivity::class.java)
-                                                        context.startActivity(intent)
+                                                        
+                                                        // Check if we need to select a flight
+                                                        val currentIntent = (context as? LoginActivity)?.intent
+                                                        val flightNumber = currentIntent?.getStringExtra("flightNumber")
+                                                        val fareCode = currentIntent?.getStringExtra("fareCode")
+                                                        val sessionToken = currentIntent?.getStringExtra("sessionToken")
+                                                        
+                                                        if (flightNumber != null && fareCode != null && sessionToken != null) {
+                                                            try {
+                                                                val selectResponse = RetrofitInstance.flightApi.selectFlight(
+                                                                    SelectFlightRequestDTO(
+                                                                        sessionToken = sessionToken,
+                                                                        flights = listOf(
+                                                                            FlightSelectionDTO(
+                                                                                flightNumber = flightNumber,
+                                                                                fareCode = fareCode
+                                                                            )
+                                                                        )
+                                                                    )
+                                                                )
+                                                                
+                                                                if (selectResponse.status == 200) {
+                                                                    // Navigate to booking screen or handle the response
+                                                                    Toast.makeText(context, "Flight selected successfully", Toast.LENGTH_SHORT).show()
+                                                                    // TODO: Navigate to booking screen
+                                                                } else {
+                                                                    Toast.makeText(context, selectResponse.message, Toast.LENGTH_SHORT).show()
+                                                                }
+                                                            } catch (e: Exception) {
+                                                                Toast.makeText(context, "Error selecting flight: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                            }
+                                                        } else {
+                                                            // Normal login flow
+                                                            val intent = Intent(context, com.vietjoke.vn.Activities.Dashboard.DashboardActivity::class.java)
+                                                            context.startActivity(intent)
+                                                        }
                                                     }
                                                     else -> {
                                                         val errorMessage = loginResponse.errors?.firstOrNull()?.message 

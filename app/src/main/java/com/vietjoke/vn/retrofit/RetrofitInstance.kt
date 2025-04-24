@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitInstance {
     private const val BASE_URL_EMULATOR = "http://10.0.2.2:8080/"
-    private const val BASE_URL_DEVICE = "http://192.168.1.10:8080/" // Thay đổi IP này thành IP máy tính của bạn
+    private const val BASE_URL_DEVICE = "http://192.168.1.4:8080/" // Thay đổi IP này thành IP máy tính của bạn
     private const val TIMEOUT_SECONDS = 30L
 
     private val json = Json {
@@ -33,7 +33,7 @@ object RetrofitInstance {
 
     private val retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL_DEVICE) // Sử dụng BASE_URL_DEVICE cho thiết bị thật
+            .baseUrl(BASE_URL_EMULATOR) // Sử dụng BASE_URL_DEVICE cho thiết bị thật
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()

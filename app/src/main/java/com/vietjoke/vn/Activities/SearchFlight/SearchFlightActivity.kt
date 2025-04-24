@@ -2,6 +2,7 @@ package com.vietjoke.vn.Activities.SearchFlight
 
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -39,8 +40,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vietjoke.vn.Activities.FlightList.FlightListActivity
 
 import com.vietjoke.vn.R
+import com.vietjoke.vn.retrofit.ResponseDTO.FlightResponseDTO
 import com.vietjoke.vn.retrofit.ResponseDTO.SearchParamDTO
 import com.vietjoke.vn.retrofit.RetrofitInstance
 import kotlinx.coroutines.launch
@@ -87,6 +90,9 @@ fun SearchFlightScreen() {
     var date by remember { mutableStateOf<LocalDate?>(null) }
     var returnDate by remember { mutableStateOf<LocalDate?>(null) }
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    var flights by remember { mutableStateOf<List<FlightResponseDTO>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
 
     var isRoundTrip by remember { mutableStateOf(false) }
     var showDepartDatePicker by remember { mutableStateOf(false) }
@@ -95,9 +101,7 @@ fun SearchFlightScreen() {
     var showToAirportDialog by remember { mutableStateOf(false) }
     val initialPassengerString = "1 người lớn"
     val (initialAdults, initialChildren, initialInfants) = remember {
-        parsePassengers(
-            initialPassengerString
-        )
+        parsePassengers(initialPassengerString)
     }
     var adults by remember { mutableStateOf(initialAdults) }
     var children by remember { mutableStateOf(initialChildren) }
@@ -106,6 +110,9 @@ fun SearchFlightScreen() {
     var showPassengerDialog by remember { mutableStateOf(false) }
     var promoCode by remember { mutableStateOf("") }
     var findCheapest by remember { mutableStateOf(false) }
+
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -237,9 +244,6 @@ fun SearchFlightScreen() {
                     
                     Spacer(modifier = Modifier.weight(1f))
                     
-                    val coroutineScope = rememberCoroutineScope()
-                    val context = LocalContext.current
-
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -252,49 +256,60 @@ fun SearchFlightScreen() {
                             )
                             .clickable {
                                 coroutineScope.launch {
-                                    val param = SearchParamDTO(
-                                        tripType = if (isRoundTrip) "round_trip" else "oneway",
-                                        tripFrom = fromCode,
-                                        tripTo = toCode,
-                                        tripStartDate = date?.format(dateFormatter)
-                                            ?: LocalDate.now().format(dateFormatter),
-                                        tripReturnDate = if (isRoundTrip) returnDate?.format(
-                                            dateFormatter
-                                        ) else null,
-                                        tripPassengers = adults + children + infants,
-                                        tripPassengersAdult = adults,
-                                        tripPassengersChild = children,
-                                        tripPassengersInfant = infants,
-                                        coupon = promoCode.ifEmpty { null },
-                                        is_find_cheapest = findCheapest
-                                    )
-
+                                    isLoading = true
+                                    error = null
                                     try {
-                                        val response =
-                                            RetrofitInstance.flightApi.searchFlights(param)
+                                        val param = SearchParamDTO(
+                                            tripType = if (isRoundTrip) "round_trip" else "oneway",
+                                            tripFrom = fromCode,
+                                            tripTo = toCode,
+                                            tripStartDate = date?.format(dateFormatter)
+                                                ?: LocalDate.now().format(dateFormatter),
+                                            tripReturnDate = if (isRoundTrip) returnDate?.format(
+                                                dateFormatter
+                                            ) else null,
+                                            tripPassengers = adults + children + infants,
+                                            tripPassengersAdult = adults,
+                                            tripPassengersChild = children,
+                                            tripPassengersInfant = infants,
+                                            coupon = promoCode.ifEmpty { null },
+                                            is_find_cheapest = findCheapest
+                                        )
+
+                                        val response = RetrofitInstance.flightApi.searchFlights(param)
                                         if (response.status == 200) {
-                                            Toast.makeText(
-                                                context,
-                                                "✅ Thanh cong",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            // 👉 xử lý result.data tại đây
+                                            response.data?.travelOptions?.firstOrNull()?.values?.firstOrNull()?.let { flightList ->
+                                                val intent = Intent(context, FlightListActivity::class.java)
+                                                intent.putExtra("flights", ArrayList(flightList))
+                                                intent.putExtra("sessionToken", response.data?.sessionToken)
+                                                context.startActivity(intent)
+                                            } ?: run {
+                                                error = "Không tìm thấy chuyến bay phù hợp"
+                                                Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                                            }
                                         } else {
-                                            Toast.makeText(context, "❌ Lỗi", Toast.LENGTH_LONG)
-                                                .show()
+                                            error = "❌ Lỗi"
+                                            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
                                         }
                                     } catch (e: Exception) {
-                                        Toast.makeText(
-                                            context,
-                                            "⚠️ Lỗi kết nối: ${e.message}",
-                                            Toast.LENGTH_LONG
-                                        ).show()
+                                        error = "⚠️ Lỗi kết nối: ${e.message}"
+                                        Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                                    } finally {
+                                        isLoading = false
                                     }
                                 }
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Tìm chuyến bay", color = Color.White, fontWeight = FontWeight.Bold)
+                        if (isLoading) {
+                            CircularProgressIndicator(color = Color.White)
+                        } else {
+                            Text("Tìm chuyến bay", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    if (flights.isNotEmpty()) {
+                        FlightList(flights = flights)
                     }
                 }
             }
@@ -508,6 +523,175 @@ fun ShowDatePickerDialog(
 
         LaunchedEffect(Unit) {
             datePickerDialog.show()
+        }
+    }
+}
+
+@Composable
+fun FlightTicketCard(flight: FlightResponseDTO) {
+    var isExpanded by remember { mutableStateOf(false) }
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        backgroundColor = Color.White,
+        elevation = 4.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // Flight header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = flight.flightNumber,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                    Text(
+                        text = flight.flightModelCode,
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = flight.route.originAirport.airportCode,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                    Text(
+                        text = flight.scheduledDeparture,
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+
+            // Flight path visualization
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.FlightTakeoff,
+                    contentDescription = null,
+                    tint = Color(0xFF9C27B0)
+                )
+                Divider(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp),
+                    color = Color(0xFF9C27B0)
+                )
+                Icon(
+                    imageVector = Icons.Default.FlightLand,
+                    contentDescription = null,
+                    tint = Color(0xFF9C27B0)
+                )
+            }
+
+            // Destination info
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = flight.route.destinationAirport.airportCode,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                    Text(
+                        text = flight.scheduledArrival,
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+
+            // Fare classes dropdown
+            IconButton(
+                onClick = { isExpanded = !isExpanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        tint = Color(0xFF9C27B0)
+                    )
+                }
+            }
+
+            if (isExpanded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    flight.fareClasses.forEach { fareClass ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            backgroundColor = Color(0xFFF5F5F5),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = fareClass.fareClassName,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "${fareClass.availableSeats} seats available",
+                                        color = Color.Gray,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                Text(
+                                    text = "${String.format("%,.0f", fareClass.basePrice)}đ",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF9C27B0)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FlightList(flights: List<FlightResponseDTO>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        flights.forEach { flight ->
+            FlightTicketCard(flight = flight)
         }
     }
 }
