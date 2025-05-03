@@ -45,22 +45,22 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.ResponseBody
 import retrofit2.Response
+import com.vietjoke.vn.model.FlightBookingModel
+import com.vietjoke.vn.Activities.Booking.BookingActivity
+import com.vietjoke.vn.model.PassengerCountModel
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme(colorScheme = lightColorScheme(primary = Purple500, secondary = Teal200)) {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    LoginScreen()
-                }
+                LoginScreen()
             }
-        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Preview
 fun LoginScreen() {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -82,8 +82,7 @@ fun LoginScreen() {
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+                .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -91,7 +90,7 @@ fun LoginScreen() {
                 painter = painterResource(R.drawable.logo_login),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(270.dp)
+                    .size(250.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Box(
@@ -101,7 +100,7 @@ fun LoginScreen() {
                         color = Color.White.copy(alpha = 0.9f),
                         shape = RoundedCornerShape(20.dp)
                     )
-                    .padding(24.dp)
+                    .padding(30.dp)
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
@@ -110,7 +109,7 @@ fun LoginScreen() {
                         color = Color.Black,
                         fontSize = 35.sp
                     )
-                    Spacer(modifier = Modifier.height(28.dp))
+                    //Spacer(modifier = Modifier.height(20.dp))
 
                     OutlinedTextField(
                         value = username,
@@ -155,7 +154,7 @@ fun LoginScreen() {
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    //Spacer(modifier = Modifier.height(10.dp))
 
                     OutlinedTextField(
                         value = password,
@@ -211,7 +210,7 @@ fun LoginScreen() {
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    //Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -246,7 +245,7 @@ fun LoginScreen() {
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    //Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
                         onClick = {
@@ -285,9 +284,9 @@ fun LoginScreen() {
                                                         
                                                         // Check if we need to select a flight
                                                         val currentIntent = (context as? LoginActivity)?.intent
-                                                        val flightNumber = currentIntent?.getStringExtra("flightNumber")
-                                                        val fareCode = currentIntent?.getStringExtra("fareCode")
-                                                        val sessionToken = currentIntent?.getStringExtra("sessionToken")
+                                                        val flightNumber = currentIntent?.getStringExtra("flightNumber") ?: FlightBookingModel.flightNumber
+                                                        val fareCode = currentIntent?.getStringExtra("fareCode") ?: FlightBookingModel.fareCode
+                                                        val sessionToken = currentIntent?.getStringExtra("sessionToken") ?: FlightBookingModel.sessionToken
                                                         
                                                         if (flightNumber != null && fareCode != null && sessionToken != null) {
                                                             try {
@@ -304,9 +303,18 @@ fun LoginScreen() {
                                                                 )
                                                                 
                                                                 if (selectResponse.status == 200) {
-                                                                    // Navigate to booking screen or handle the response
+                                                                    // Navigate to booking screen
                                                                     Toast.makeText(context, "Flight selected successfully", Toast.LENGTH_SHORT).show()
-                                                                    // TODO: Navigate to booking screen
+                                                                    // Set passenger counts from API response
+                                                                    PassengerCountModel.setCounts(
+                                                                        adult = selectResponse.data?.tripPassengersAdult ?: 1,
+                                                                        child = selectResponse.data?.tripPassengersChildren ?: 0,
+                                                                        infant = selectResponse.data?.tripPassengersInfant ?: 0
+                                                                    )
+                                                                    // Initialize passengers
+                                                                    FlightBookingModel.initializePassengers()
+                                                                    val intent = Intent(context, BookingActivity::class.java)
+                                                                    context.startActivity(intent)
                                                                 } else {
                                                                     Toast.makeText(context, selectResponse.message, Toast.LENGTH_SHORT).show()
                                                                 }
@@ -315,8 +323,8 @@ fun LoginScreen() {
                                                             }
                                                         } else {
                                                             // Normal login flow
-                                                            val intent = Intent(context, com.vietjoke.vn.Activities.Dashboard.DashboardActivity::class.java)
-                                                            context.startActivity(intent)
+                                                        val intent = Intent(context, com.vietjoke.vn.Activities.Dashboard.DashboardActivity::class.java)
+                                                        context.startActivity(intent)
                                                         }
                                                     }
                                                     else -> {
@@ -391,7 +399,7 @@ fun LoginScreen() {
                         )}
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
                         text = "Or continue with",
@@ -400,7 +408,7 @@ fun LoginScreen() {
                         fontSize = 14.sp
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -452,7 +460,7 @@ fun LoginScreen() {
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -479,16 +487,3 @@ fun LoginScreen() {
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    MaterialTheme(colorScheme = lightColorScheme(primary = Purple500, secondary = Teal200)) {
-        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            LoginScreen()
-        }
-    }
-}
-
-val Purple500 = Color(0xFF6200EE)
-val Teal200 = Color(0xFF03DAC5)

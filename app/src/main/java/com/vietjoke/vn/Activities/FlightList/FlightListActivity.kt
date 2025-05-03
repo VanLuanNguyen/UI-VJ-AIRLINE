@@ -1,8 +1,10 @@
 package com.vietjoke.vn.Activities.FlightList
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -42,16 +44,18 @@ import java.time.format.DateTimeFormatter
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import com.vietjoke.vn.Activities.Login.LoginActivity
+import com.vietjoke.vn.model.FlightBookingModel
 
 class FlightListActivity : AppCompatActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Get flight list and sessionToken from intent
         @Suppress("UNCHECKED_CAST")
         val flights = intent.getSerializableExtra("flights") as? List<FlightResponseDTO> ?: emptyList()
         val sessionToken = intent.getStringExtra("sessionToken")
-        
+
         setContent {
             FlightListScreen(flights = flights, sessionToken = sessionToken)
         }
@@ -59,6 +63,7 @@ class FlightListActivity : AppCompatActivity() {
 }
 
 // Add this function to extract time from datetime string
+@RequiresApi(Build.VERSION_CODES.O)
 private fun extractTimeFromDateTime(dateTimeStr: String): String {
     return try {
         val dateTime = LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_DATE_TIME)
@@ -68,6 +73,7 @@ private fun extractTimeFromDateTime(dateTimeStr: String): String {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 private fun extractDateFromDateTime(dateTimeStr: String): String {
     return try {
         val dateTime = LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_DATE_TIME)
@@ -77,6 +83,7 @@ private fun extractDateFromDateTime(dateTimeStr: String): String {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 private fun calculateDuration(departure: String, arrival: String): String {
     return try {
         val departureTime = LocalDateTime.parse(departure, DateTimeFormatter.ISO_DATE_TIME)
@@ -90,6 +97,7 @@ private fun calculateDuration(departure: String, arrival: String): String {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun FlightListScreen(flights: List<FlightResponseDTO>, sessionToken: String?) {
     val context = LocalContext.current
@@ -112,6 +120,10 @@ fun FlightListScreen(flights: List<FlightResponseDTO>, sessionToken: String?) {
                                 putExtra("fareCode", fareCode)
                                 putExtra("sessionToken", sessionToken)
                             }
+                            // Save to model
+                            FlightBookingModel.flightNumber = flight.flightNumber
+                            FlightBookingModel.fareCode = fareCode
+                            FlightBookingModel.sessionToken = sessionToken
                             context.startActivity(intent)
                         }
                     }
@@ -185,10 +197,11 @@ fun FlightListScreen(flights: List<FlightResponseDTO>, sessionToken: String?) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun FlightTicketCard(flight: FlightResponseDTO, onFareClassSelected: (FlightResponseDTO, String) -> Unit) {
     var isExpanded by remember { mutableStateOf(false) }
-    
+
     ConstraintLayout(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -396,45 +409,100 @@ fun FlightTicketCard(flight: FlightResponseDTO, onFareClassSelected: (FlightResp
         if (isExpanded) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
+                    .constrainAs(fareContent) {
+                        top.linkTo(fareButton.bottom, 8.dp)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                        width = Dimension.fillToConstraints
+                    }
+                    .padding(horizontal = 16.dp) // Add horizontal padding to the container column
             ) {
-                flight.fareClasses.forEach { fareClass ->
+                // Optional: Add a title or divider before the list
+                Text("Select Fare Class:", modifier = Modifier.padding(bottom = 4.dp), fontWeight = FontWeight.Medium)
+                Divider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp, modifier = Modifier.padding(bottom = 8.dp))
+
+                flight.fareClasses.forEachIndexed { index, fareClass ->
+                    // Divider between items
+                    if (index > 0) {
+                        Divider(
+                            color = Color.LightGray.copy(alpha = 0.6f),
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(vertical = 5.dp)
+                        )
+                    }
+
+                    // Card for each fare class
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .clickable { onFareClassSelected(flight, fareClass.fareClassCode) },
-                        backgroundColor = Color(0xFFF5F5F5),
-                        shape = RoundedCornerShape(8.dp)
+                            // .padding(vertical = 5.dp) // Remove this if Divider handles spacing
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable {
+                                // Optional: Disable click if not available?
+                                if (fareClass.availableSeats > 0) {
+                                    onFareClassSelected(flight, fareClass.fareClassCode)
+                                }
+                                // Else: Maybe show a Toast message "Hết chỗ"?
+                            },
+                        backgroundColor = Color.White,
+                        elevation = 2.dp,
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                                .padding(horizontal = 16.dp, vertical = 12.dp), // Internal padding
+                            horizontalArrangement = Arrangement.SpaceBetween, // Pushes price to the end
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column {
+                            // Left Side: Class Name and Seat Info
+                            Column(
+                                verticalArrangement = Arrangement.Center
+                            ) {
                                 Text(
                                     text = fareClass.fareClassName,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF333333)
                                 )
-                                Text(
-                                    text = "${fareClass.availableSeats} seats available",
-                                    color = Color.Gray,
-                                    fontSize = 12.sp
-                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+
+                                // *** MODIFIED ROW FOR AVAILABILITY ***
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Determine text and color based on availability
+                                    val isAvailable = fareClass.availableSeats > 0
+                                    val availabilityText = if (isAvailable) "Còn chỗ" else "Hết chỗ"
+                                    // Use Gray if available, a muted Red if not available
+                                    val availabilityColor = if (isAvailable) Color.Gray else Color.Red.copy(alpha = 0.8f)
+
+                                    Icon(
+                                        imageVector = Icons.Default.AirlineSeatReclineNormal, // Seat Icon
+                                        contentDescription = availabilityText, // Update content description too
+                                        tint = availabilityColor, // Match icon tint to text color
+                                        modifier = Modifier.size(14.dp) // Adjust icon size
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp)) // Space between icon and text
+                                    Text(
+                                        text = availabilityText,    // Use the dynamic text
+                                        color = availabilityColor,  // Use the dynamic color
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                // *** END OF MODIFIED ROW ***
                             }
+
+                            // Right Side: Price
                             Text(
                                 text = "${String.format("%,.0f", fareClass.basePrice)}đ",
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF9C27B0)
+                                fontSize = 18.sp,
+                                color = colorResource(R.color.purple_700)
                             )
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(8.dp)) // Add padding at the bottom of the list
             }
         }
     }
-} 
+}

@@ -49,6 +49,7 @@ import kotlinx.serialization.json.Json
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import com.vietjoke.vn.model.FlightBookingModel
 
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -223,6 +224,10 @@ fun RegisterScreen() {
                                                 200 -> {
                                                     Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
                                                     val intent = Intent(context, LoginActivity::class.java)
+                                                    // Pass flight information if available
+                                                    FlightBookingModel.flightNumber?.let { intent.putExtra("flightNumber", it) }
+                                                    FlightBookingModel.fareCode?.let { intent.putExtra("fareCode", it) }
+                                                    FlightBookingModel.sessionToken?.let { intent.putExtra("sessionToken", it) }
                                                     context.startActivity(intent)
                                                 }
                                                 else -> {

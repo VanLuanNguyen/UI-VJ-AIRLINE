@@ -17,16 +17,12 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31" >
         <activity
-            android:name=".Activities.Dashboard.DashboardActivity"
-            android:exported="false" />
+            android:name=".Activities.Dashboard.DashboardActivity"/>
         <activity
-            android:name=".Activities.SearchFlight.SearchFlightActivity"
-            android:exported="false" />
+            android:name=".Activities.SearchFlight.SearchFlightActivity"/>
         <activity
-            android:name=".Activities.Login.LoginActivity"
-            android:exported="false" />
-        <activity android:name=".Activities.FlightList.FlightListActivity"
-            android:exported="false"/>
+            android:name=".Activities.Login.LoginActivity"/>
+        <activity android:name=".Activities.FlightList.FlightListActivity"/>
         <activity
             android:name=".Activities.Splash.SplashActivity"
             android:exported="true" >
@@ -41,9 +37,8 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.VietJokeAirline" />
-        <activity
-            android:name=".Activities.Register.RegisterActivity"
-            android:exported="false" />
+        <activity android:name=".Activities.Register.RegisterActivity"/>
+        <activity android:name=".Activities.Booking.BookingActivity"/>
     </application>
 
 </manifest>

@@ -2,6 +2,7 @@ package com.vietjoke.vn.retrofit
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.vietjoke.vn.retrofit.APIService.AuthApiService
+import com.vietjoke.vn.retrofit.APIService.BookingApiService
 import com.vietjoke.vn.retrofit.APIService.FlightApiService
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -12,7 +13,7 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitInstance {
     private const val BASE_URL_EMULATOR = "http://10.0.2.2:8080/"
-    private const val BASE_URL_DEVICE = "http://192.168.1.4:8080/" // Thay đổi IP này thành IP máy tính của bạn
+    private const val BASE_URL_DEVICE = "http://192.168.1.8:8080/" // Thay đổi IP này thành IP máy tính của bạn
     private const val TIMEOUT_SECONDS = 30L
 
     private val json = Json {
@@ -45,5 +46,9 @@ object RetrofitInstance {
 
     val authApi: AuthApiService by lazy {
         retrofit.create(AuthApiService::class.java)
+    }
+
+    val bookingApi: BookingApiService by lazy {
+        retrofit.create(BookingApiService::class.java)
     }
 }
