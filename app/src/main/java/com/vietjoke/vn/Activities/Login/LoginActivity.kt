@@ -2,6 +2,7 @@ package com.vietjoke.vn.Activities.Login
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -47,6 +48,8 @@ import okhttp3.ResponseBody
 import retrofit2.Response
 import com.vietjoke.vn.model.FlightBookingModel
 import com.vietjoke.vn.Activities.Booking.BookingActivity
+import com.vietjoke.vn.Activities.Dashboard.DashboardActivity
+import com.vietjoke.vn.Activities.FlightList.FlightListActivity
 import com.vietjoke.vn.model.PassengerCountModel
 
 class LoginActivity : ComponentActivity() {
@@ -275,62 +278,113 @@ fun LoginScreen() {
                                                 password = password
                                             )
                                         )
-                                        
+
                                         if (response.isSuccessful) {
                                             response.body()?.let { loginResponse ->
                                                 when (loginResponse.status) {
                                                     200 -> {
                                                         Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
-                                                        
-                                                        // Check if we need to select a flight
+
+                                                        // --- CẬP NHẬT LOGIC XỬ LÝ CHUYẾN BAY ---
                                                         val currentIntent = (context as? LoginActivity)?.intent
-                                                        val flightNumber = currentIntent?.getStringExtra("flightNumber") ?: FlightBookingModel.flightNumber
-                                                        val fareCode = currentIntent?.getStringExtra("fareCode") ?: FlightBookingModel.fareCode
-                                                        val sessionToken = currentIntent?.getStringExtra("sessionToken") ?: FlightBookingModel.sessionToken
-                                                        
-                                                        if (flightNumber != null && fareCode != null && sessionToken != null) {
+                                                        val isRoundTrip = currentIntent?.getBooleanExtra(
+                                                            FlightListActivity.EXTRA_IS_ROUND_TRIP, false) ?: FlightBookingModel.isRoundTrip
+
+                                                        // Lấy thông tin chuyến đi (ưu tiên Intent)
+                                                        val outboundFlightNumber = currentIntent?.getStringExtra(if(isRoundTrip) "outboundFlightNumber" else "flightNumber") ?: FlightBookingModel.flightNumber
+                                                        val outboundFareCode = currentIntent?.getStringExtra(if(isRoundTrip) "outboundFareCode" else "fareCode") ?: FlightBookingModel.fareCode
+                                                        val sessionToken = currentIntent?.getStringExtra(FlightListActivity.EXTRA_SESSION_TOKEN) ?: FlightBookingModel.sessionToken // Lấy sessionToken
+
+                                                        // Tạo danh sách chuyến bay cần chọn
+                                                        val flightSelections = mutableListOf<FlightSelectionDTO>()
+
+                                                        if (outboundFlightNumber != null && outboundFareCode != null) {
+                                                            flightSelections.add(
+                                                                FlightSelectionDTO(
+                                                                    flightNumber = outboundFlightNumber,
+                                                                    fareCode = outboundFareCode
+                                                                )
+                                                            )
+                                                            Log.d("LoginSelectFlight", "Added Outbound: $outboundFlightNumber / $outboundFareCode")
+
+                                                            // Nếu là khứ hồi, lấy và thêm thông tin chuyến về
+                                                            if (isRoundTrip) {
+                                                                val returnFlightNumber = currentIntent?.getStringExtra("returnFlightNumber") ?: FlightBookingModel.returnFlightNumber
+                                                                val returnFareCode = currentIntent?.getStringExtra("returnFareCode") ?: FlightBookingModel.returnFareCode
+
+                                                                if (returnFlightNumber != null && returnFareCode != null) {
+                                                                    flightSelections.add(
+                                                                        FlightSelectionDTO(
+                                                                            flightNumber = returnFlightNumber,
+                                                                            fareCode = returnFareCode
+                                                                        )
+                                                                    )
+                                                                    Log.d("LoginSelectFlight", "Added Return: $returnFlightNumber / $returnFareCode")
+                                                                } else {
+                                                                    // Log cảnh báo nếu là khứ hồi nhưng thiếu thông tin chuyến về
+                                                                    Log.w("LoginSelectFlight", "Round trip but return flight details missing.")
+                                                                    // Có thể hiển thị Toast hoặc xử lý khác nếu cần
+                                                                }
+                                                            }
+                                                        }
+
+                                                        // Chỉ gọi API selectFlight nếu có thông tin chuyến bay cần chọn và có sessionToken
+                                                        if (flightSelections.isNotEmpty() && sessionToken != null) {
+                                                            Log.d("LoginSelectFlight", "Calling selectFlight API with ${flightSelections.size} flights and token: $sessionToken")
                                                             try {
+                                                                // Gọi API selectFlight với danh sách chuyến bay đã tạo
                                                                 val selectResponse = RetrofitInstance.flightApi.selectFlight(
                                                                     SelectFlightRequestDTO(
                                                                         sessionToken = sessionToken,
-                                                                        flights = listOf(
-                                                                            FlightSelectionDTO(
-                                                                                flightNumber = flightNumber,
-                                                                                fareCode = fareCode
-                                                                            )
-                                                                        )
+                                                                        flights = flightSelections // <-- Sử dụng danh sách đã tạo
                                                                     )
                                                                 )
-                                                                
-                                                                if (selectResponse.status == 200) {
-                                                                    // Navigate to booking screen
-                                                                    Toast.makeText(context, "Flight selected successfully", Toast.LENGTH_SHORT).show()
-                                                                    // Set passenger counts from API response
+
+                                                                if (selectResponse.status == 200 && selectResponse.data != null) {
+                                                                    Toast.makeText(context, "Flight(s) selected successfully", Toast.LENGTH_SHORT).show()
+                                                                    // Cập nhật sessionToken mới từ response (QUAN TRỌNG)
+                                                                    FlightBookingModel.sessionToken = selectResponse.data.sessionToken
+
+                                                                    // Cập nhật số lượng hành khách từ response (nếu bạn dùng PassengerCountModel)
                                                                     PassengerCountModel.setCounts(
-                                                                        adult = selectResponse.data?.tripPassengersAdult ?: 1,
-                                                                        child = selectResponse.data?.tripPassengersChildren ?: 0,
-                                                                        infant = selectResponse.data?.tripPassengersInfant ?: 0
+                                                                        adult = selectResponse.data.tripPassengersAdult ?: 1,
+                                                                        child = selectResponse.data.tripPassengersChildren ?: 0,
+                                                                        infant = selectResponse.data.tripPassengersInfant ?: 0
                                                                     )
-                                                                    // Initialize passengers
+                                                                    // Khởi tạo danh sách hành khách trong model
                                                                     FlightBookingModel.initializePassengers()
+
+                                                                    // Chuyển sang màn hình Booking
                                                                     val intent = Intent(context, BookingActivity::class.java)
                                                                     context.startActivity(intent)
+                                                                    // Tùy chọn: finish() LoginActivity nếu không muốn quay lại
+                                                                    (context as? ComponentActivity)?.finish()
+
                                                                 } else {
-                                                                    Toast.makeText(context, selectResponse.message, Toast.LENGTH_SHORT).show()
+                                                                    // Lỗi từ API selectFlight
+                                                                    Toast.makeText(context, "Error selecting flight: ${selectResponse.message}", Toast.LENGTH_SHORT).show()
+                                                                    Log.e("LoginSelectFlight", "API selectFlight error: ${selectResponse.message} (Status: ${selectResponse.status})")
+                                                                    // Có thể ở lại màn hình Login hoặc quay lại FlightList?
                                                                 }
                                                             } catch (e: Exception) {
                                                                 Toast.makeText(context, "Error selecting flight: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                                Log.e("LoginSelectFlight", "Exception during selectFlight call", e)
+                                                                // Xử lý lỗi mạng/ngoại lệ
                                                             }
                                                         } else {
-                                                            // Normal login flow
-                                                        val intent = Intent(context, com.vietjoke.vn.Activities.Dashboard.DashboardActivity::class.java)
-                                                        context.startActivity(intent)
+                                                            // Đăng nhập thành công nhưng không có thông tin chuyến bay từ trước
+                                                            // -> Chuyển hướng đến màn hình chính (Dashboard)
+                                                            Log.d("LoginFlow", "Login successful, no pending flight selection. Navigating to Dashboard.")
+                                                            val intent = Intent(context, DashboardActivity::class.java) // Đảm bảo tên Activity đúng
+                                                            context.startActivity(intent)
+                                                            // Tùy chọn: finish() LoginActivity
+                                                            (context as? ComponentActivity)?.finish()
                                                         }
+                                                        // --- KẾT THÚC CẬP NHẬT LOGIC ---
                                                     }
                                                     else -> {
-                                                        val errorMessage = loginResponse.errors?.firstOrNull()?.message 
-                                                            ?: loginResponse.message 
-                                                            ?: "Unknown error occurred"
+                                                        // ... (Xử lý lỗi login khác giữ nguyên) ...
+                                                        val errorMessage = loginResponse.errors?.firstOrNull()?.message ?: loginResponse.message ?: "Unknown error occurred"
                                                         Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                                                     }
                                                 }

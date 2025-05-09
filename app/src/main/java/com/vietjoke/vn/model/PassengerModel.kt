@@ -17,5 +17,5 @@ data class PassengerModel(
     var phone: String = "",
     var email: String = "",
     var accompanyingAdultFirstName: String = "",
-    var accompanyingAdultLastName: String = ""
+    var accompanyingAdultLastName: String = "",
 ) 

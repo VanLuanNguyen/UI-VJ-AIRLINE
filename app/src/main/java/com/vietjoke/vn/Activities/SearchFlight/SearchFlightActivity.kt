@@ -277,18 +277,58 @@ fun SearchFlightScreen() {
                                         )
 
                                         val response = RetrofitInstance.flightApi.searchFlights(param)
-                                        if (response.status == 200) {
-                                            response.data?.travelOptions?.firstOrNull()?.values?.firstOrNull()?.let { flightList ->
+                                        if (response.status == 200 && response.data != null) {
+                                            val travelOptionsMap = response.data.travelOptions.firstOrNull() // Get the first map, assuming it holds the itinerary
+
+                                            if (travelOptionsMap != null && travelOptionsMap.isNotEmpty()) {
                                                 val intent = Intent(context, FlightListActivity::class.java)
-                                                intent.putExtra("flights", ArrayList(flightList))
-                                                intent.putExtra("sessionToken", response.data?.sessionToken)
-                                                context.startActivity(intent)
-                                            } ?: run {
-                                                error = "Không tìm thấy chuyến bay phù hợp"
+                                                intent.putExtra("sessionToken", response.data.sessionToken)
+
+                                                // --- MODIFICATION FOR ROUND TRIP ---
+                                                if (isRoundTrip) {
+                                                    // Attempt to extract outbound and return lists
+                                                    // **ASSUMPTION:** The map's values contain the lists, first is outbound, second is return.
+                                                    // **VERIFY THIS LOGIC AGAINST YOUR API RESPONSE STRUCTURE!**
+                                                    val flightLists = travelOptionsMap.values.toList()
+
+                                                    if (flightLists.size >= 2) {
+                                                        val outboundFlights = ArrayList(flightLists[0]) // Assuming first list is outbound
+                                                        val returnFlights = ArrayList(flightLists[1])   // Assuming second list is return
+
+                                                        if (outboundFlights.isNotEmpty() && returnFlights.isNotEmpty()) {
+                                                            intent.putExtra("isRoundTrip", true)
+                                                            intent.putExtra("outboundFlights", outboundFlights)
+                                                            intent.putExtra("returnFlights", returnFlights)
+                                                            context.startActivity(intent)
+                                                        } else {
+                                                            error = "Thiếu thông tin chuyến bay đi hoặc về."
+                                                            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                                                        }
+                                                    } else {
+                                                        // Handle error: Round trip selected but API didn't return two distinct flight lists
+                                                        error = "Không tìm thấy đủ thông tin chuyến bay khứ hồi."
+                                                        Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                                                    }
+                                                } else { // One-way trip
+                                                    // Use the first list found as the one-way flights
+                                                    val flights = ArrayList(travelOptionsMap.values.firstOrNull() ?: emptyList())
+                                                    if (flights.isNotEmpty()) {
+                                                        intent.putExtra("isRoundTrip", false)
+                                                        intent.putExtra("flights", flights) // Use the original key for one-way
+                                                        context.startActivity(intent)
+                                                    } else {
+                                                        error = "Không tìm thấy chuyến bay phù hợp."
+                                                        Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+                                                    }
+                                                }
+                                                // --- END OF MODIFICATION ---
+
+                                            } else {
+                                                error = "Không tìm thấy chuyến bay phù hợp."
                                                 Toast.makeText(context, error, Toast.LENGTH_LONG).show()
                                             }
                                         } else {
-                                            error = "❌ Lỗi"
+                                            error = response.message ?: "Lỗi tìm kiếm chuyến bay (${response.status})."
                                             Toast.makeText(context, error, Toast.LENGTH_LONG).show()
                                         }
                                     } catch (e: Exception) {

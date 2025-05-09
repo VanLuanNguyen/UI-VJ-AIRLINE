@@ -1,5 +1,6 @@
 package com.vietjoke.vn.Activities.Booking
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.Patterns
@@ -258,7 +259,8 @@ fun BookingScreen() {
                                                     bookingResponse.data?.sessionToken?.let { newSessionToken ->
                                                         FlightBookingModel.sessionToken = newSessionToken
                                                     }
-                                                    // TODO: Navigate
+                                                    val intent = Intent(context, AncillaryActivity::class.java)
+                                                    context.startActivity(intent)
                                                 }
                                                 else -> {
                                                     Toast.makeText(context, bookingResponse.message, Toast.LENGTH_SHORT).show()

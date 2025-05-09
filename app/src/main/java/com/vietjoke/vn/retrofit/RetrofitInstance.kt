@@ -4,6 +4,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.vietjoke.vn.retrofit.APIService.AuthApiService
 import com.vietjoke.vn.retrofit.APIService.BookingApiService
 import com.vietjoke.vn.retrofit.APIService.FlightApiService
+import com.vietjoke.vn.retrofit.APIService.SeatApiService
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -50,5 +51,9 @@ object RetrofitInstance {
 
     val bookingApi: BookingApiService by lazy {
         retrofit.create(BookingApiService::class.java)
+    }
+
+    val seatApi: SeatApiService by lazy {
+        retrofit.create(SeatApiService::class.java)
     }
 }
