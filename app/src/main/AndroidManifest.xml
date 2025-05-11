@@ -41,6 +41,11 @@
         <activity android:name=".Activities.Booking.BookingActivity"/>
         <activity android:name=".Activities.Booking.AncillaryActivity"/>
         <activity android:name=".Activities.Booking.SeatSelectionActivity"/>
+        <activity android:name=".Activities.Booking.LuggageSelectionActivity"/>
+        <activity android:name=".Activities.Booking.MealSelectionActivity"/>
+        <activity android:name=".Activities.Booking.InsuranceSelectionActivity"/>
+        <activity android:name=".Activities.Booking.DrinkSelectionActivity"/>
+        <activity android:name=".Activities.Booking.OtherServiceSelectionActivity"/>
     </application>
 
 </manifest>

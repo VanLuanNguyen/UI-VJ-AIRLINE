@@ -47,6 +47,9 @@ import androidx.compose.ui.unit.sp
 import com.vietjoke.vn.R // Import R của project bạn
 import com.vietjoke.vn.model.FlightBookingModel
 import com.vietjoke.vn.model.SeatSelectionResult
+import com.vietjoke.vn.model.LuggageSelectionResult
+import com.vietjoke.vn.retrofit.APIService.AddonBookingItem
+import com.vietjoke.vn.retrofit.APIService.BookAddonsRequest
 import com.vietjoke.vn.retrofit.ResponseDTO.GetSeatsRequest
 import com.vietjoke.vn.retrofit.RetrofitInstance
 import kotlinx.coroutines.launch
@@ -91,6 +94,111 @@ class AncillaryActivity : ComponentActivity() {
         }
     }
 
+    private val luggageSelectionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val currentAncillaryState = ancillaryScreenState
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            val resultKey = "LUGGAGE_SELECTION_RESULT"
+            val luggageResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                data?.getSerializableExtra(resultKey, LuggageSelectionResult::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                data?.getSerializableExtra(resultKey) as? LuggageSelectionResult
+            }
+            if (luggageResult != null) {
+                currentAncillaryState?.selectedLuggageResult = luggageResult
+            } else {
+                currentAncillaryState?.selectedLuggageResult = null
+            }
+        }
+    }
+
+    private val insuranceSelectionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val currentAncillaryState = ancillaryScreenState
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            val resultKey = "INSURANCE_SELECTION_RESULT"
+            val insuranceResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                data?.getSerializableExtra(resultKey, com.vietjoke.vn.model.InsuranceSelectionResult::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                data?.getSerializableExtra(resultKey) as? com.vietjoke.vn.model.InsuranceSelectionResult
+            }
+            if (insuranceResult != null) {
+                currentAncillaryState?.selectedInsuranceResult = insuranceResult
+            } else {
+                currentAncillaryState?.selectedInsuranceResult = null
+            }
+        }
+    }
+
+    private val otherServiceSelectionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val currentAncillaryState = ancillaryScreenState
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            val resultKey = "OTHER_SERVICE_SELECTION_RESULT"
+            val otherResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                data?.getSerializableExtra(resultKey, com.vietjoke.vn.model.OtherServiceSelectionResult::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                data?.getSerializableExtra(resultKey) as? com.vietjoke.vn.model.OtherServiceSelectionResult
+            }
+            if (otherResult != null) {
+                currentAncillaryState?.selectedOtherServiceResult = otherResult
+            } else {
+                currentAncillaryState?.selectedOtherServiceResult = null
+            }
+        }
+    }
+
+    private val mealSelectionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val currentAncillaryState = ancillaryScreenState
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            val resultKey = "MEAL_SELECTION_RESULT"
+            val mealResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                data?.getSerializableExtra(resultKey, com.vietjoke.vn.model.MealSelectionResult::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                data?.getSerializableExtra(resultKey) as? com.vietjoke.vn.model.MealSelectionResult
+            }
+            if (mealResult != null) {
+                currentAncillaryState?.selectedMealsResult = mealResult
+            } else {
+                currentAncillaryState?.selectedMealsResult = null
+            }
+        }
+    }
+
+    private val drinkSelectionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val currentAncillaryState = ancillaryScreenState
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            val resultKey = "DRINK_SELECTION_RESULT"
+            val drinkResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                data?.getSerializableExtra(resultKey, com.vietjoke.vn.model.DrinkSelectionResult::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                data?.getSerializableExtra(resultKey) as? com.vietjoke.vn.model.DrinkSelectionResult
+            }
+            if (drinkResult != null) {
+                currentAncillaryState?.selectedDrinksResult = drinkResult
+            } else {
+                currentAncillaryState?.selectedDrinksResult = null
+            }
+        }
+    }
+
     // Biến tạm để giữ tham chiếu đến state của Composable
     private var ancillaryScreenState: AncillaryScreenState? = null
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,7 +209,21 @@ class AncillaryActivity : ComponentActivity() {
                     Log.d("AncillaryActivity", "Launching SeatSelectionActivity...")
                     seatSelectionLauncher.launch(intent)
                 },
-
+                luggageLauncher = { intent ->
+                    luggageSelectionLauncher.launch(intent)
+                },
+                insuranceLauncher = { intent ->
+                    insuranceSelectionLauncher.launch(intent)
+                },
+                otherServiceLauncher = { intent ->
+                    otherServiceSelectionLauncher.launch(intent)
+                },
+                mealLauncher = { intent ->
+                    mealSelectionLauncher.launch(intent)
+                },
+                drinkLauncher = { intent ->
+                    drinkSelectionLauncher.launch(intent)
+                },
                 onStateCreated = { state ->
                     Log.d("AncillaryActivity", "AncillaryScreen state holder received.")
                     ancillaryScreenState = state
@@ -112,32 +234,67 @@ class AncillaryActivity : ComponentActivity() {
 }
 
 class AncillaryScreenState(
-    selectedSeats: SeatSelectionResult? = null
+    selectedSeats: SeatSelectionResult? = null,
+    selectedLuggage: LuggageSelectionResult? = null,
+    selectedInsurance: com.vietjoke.vn.model.InsuranceSelectionResult? = null,
+    selectedOtherService: com.vietjoke.vn.model.OtherServiceSelectionResult? = null,
+    selectedMeals: com.vietjoke.vn.model.MealSelectionResult? = null,
+    selectedDrinks: com.vietjoke.vn.model.DrinkSelectionResult? = null
 ) {
     var selectedSeatsResult by mutableStateOf(selectedSeats)
+    var selectedLuggageResult by mutableStateOf(selectedLuggage)
+    var selectedInsuranceResult by mutableStateOf(selectedInsurance)
+    var selectedOtherServiceResult by mutableStateOf(selectedOtherService)
+    var selectedMealsResult by mutableStateOf(selectedMeals)
+    var selectedDrinksResult by mutableStateOf(selectedDrinks)
 }
 
 @Composable
 fun rememberAncillaryScreenState(
-    initialSeats: SeatSelectionResult? = null
+    initialSeats: SeatSelectionResult? = null,
+    initialLuggage: LuggageSelectionResult? = null,
+    initialInsurance: com.vietjoke.vn.model.InsuranceSelectionResult? = null,
+    initialOtherService: com.vietjoke.vn.model.OtherServiceSelectionResult? = null,
+    initialMeals: com.vietjoke.vn.model.MealSelectionResult? = null,
+    initialDrinks: com.vietjoke.vn.model.DrinkSelectionResult? = null
 ): AncillaryScreenState {
     return rememberSaveable(saver = AncillaryScreenStateSaver) {
-        AncillaryScreenState(initialSeats)
+        AncillaryScreenState(initialSeats, initialLuggage, initialInsurance, initialOtherService, initialMeals, initialDrinks)
     }
 }
 
-
 val AncillaryScreenStateSaver: Saver<AncillaryScreenState, Any> = mapSaver(
-    save = { mapOf("selectedSeatsResult_v1" to it.selectedSeatsResult) },
+    save = {
+        mapOf(
+            "selectedSeatsResult_v1" to it.selectedSeatsResult,
+            "selectedLuggageResult_v1" to it.selectedLuggageResult,
+            "selectedInsuranceResult_v1" to it.selectedInsuranceResult,
+            "selectedOtherServiceResult_v1" to it.selectedOtherServiceResult,
+            "selectedMealsResult_v1" to it.selectedMealsResult,
+            "selectedDrinksResult_v1" to it.selectedDrinksResult
+        )
+    },
     restore = { savedMap ->
-        AncillaryScreenState(savedMap["selectedSeatsResult_v1"] as? SeatSelectionResult)
+        AncillaryScreenState(
+            savedMap["selectedSeatsResult_v1"] as? SeatSelectionResult,
+            savedMap["selectedLuggageResult_v1"] as? LuggageSelectionResult,
+            savedMap["selectedInsuranceResult_v1"] as? com.vietjoke.vn.model.InsuranceSelectionResult,
+            savedMap["selectedOtherServiceResult_v1"] as? com.vietjoke.vn.model.OtherServiceSelectionResult,
+            savedMap["selectedMealsResult_v1"] as? com.vietjoke.vn.model.MealSelectionResult,
+            savedMap["selectedDrinksResult_v1"] as? com.vietjoke.vn.model.DrinkSelectionResult
+        )
     }
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AncillaryScreen(
-    seatLauncher: (Intent) -> Unit, // Nhận hàm để khởi chạy Activity chọn ghế
+    seatLauncher: (Intent) -> Unit,
+    luggageLauncher: (Intent) -> Unit,
+    insuranceLauncher: (Intent) -> Unit,
+    otherServiceLauncher: (Intent) -> Unit,
+    mealLauncher: (Intent) -> Unit,
+    drinkLauncher: (Intent) -> Unit,
     onStateCreated: (AncillaryScreenState) -> Unit
 ) {
     val context = LocalContext.current
@@ -149,8 +306,8 @@ fun AncillaryScreen(
     LaunchedEffect(screenState) {
         onStateCreated(screenState)
     }
-    val ancillaryOptions = remember(screenState.selectedSeatsResult) {
-        Log.d("AncillaryScreen", "Rebuilding ancillary options. Selected seats: ${screenState.selectedSeatsResult != null}")
+    val ancillaryOptions = remember(screenState.selectedSeatsResult, screenState.selectedLuggageResult, screenState.selectedInsuranceResult, screenState.selectedOtherServiceResult, screenState.selectedMealsResult, screenState.selectedDrinksResult) {
+        Log.d("AncillaryScreen", "Rebuilding ancillary options. Selected seats: ${screenState.selectedSeatsResult != null}, Selected luggage: ${screenState.selectedLuggageResult != null}, Selected insurance: ${screenState.selectedInsuranceResult != null}, Selected other service: ${screenState.selectedOtherServiceResult != null}")
         buildList {
             // --- Mục Chọn chỗ ngồi ---
             val seatSelectionOption = AncillaryOptionData(
@@ -248,59 +405,180 @@ fun AncillaryScreen(
                 icon = Icons.Filled.Luggage,
                 iconBackgroundColor = Color(0xFFFFF9C4), // Vàng nhạt
                 title = "Chọn hành lý/Dịch vụ nối chuyến",
-                price = "800.000 VND",
-                details = { // Ví dụ chi tiết bằng Composable
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("SGN \u2708 BMV", fontSize = 12.sp, color = Color.Gray) // Máy bay: \u2708
-                            Text("BMV \u2708 SGN", fontSize = 12.sp, color = Color.Gray)
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Gói 20kg", fontSize = 12.sp, color = Color.Gray)
-                            Text("Gói 20kg", fontSize = 12.sp, color = Color.Gray)
+                price = screenState.selectedLuggageResult?.selectedLuggageForAllLegs?.sumOf { leg ->
+                    leg.luggageByPassengerIndex.values.flatten().sumOf { it.price }
+                }?.let { if (it > 0) String.format("%,.0f VND", it) else null },
+                details = {
+                    val legs = screenState.selectedLuggageResult?.selectedLuggageForAllLegs
+                    if (!legs.isNullOrEmpty()) {
+                        Row(Modifier.fillMaxWidth()) {
+                            legs.forEach { leg ->
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        "${leg.originCode} \u2708 ${leg.destinationCode}",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp
+                                    )
+                                    leg.luggageByPassengerIndex.values.flatten().forEach {
+                                        Text("${it.name}", fontSize = 14.sp)
+                                    }
+                                }
+                            }
                         }
                     }
                 },
-                onClick = { Toast.makeText(context, "Chọn hành lý clicked", Toast.LENGTH_SHORT).show() }
-            ))
-            add(AncillaryOptionData(
-                icon = Icons.Filled.LocalTaxi,
-                iconBackgroundColor = Color(0xFFE3F2FD), // Xanh dương nhạt
-                title = "Xe Taxi Đón sân bay",
-                onClick = { Toast.makeText(context, "Xe Taxi clicked", Toast.LENGTH_SHORT).show() }
+                onClick = {
+                    val intent = Intent(context, LuggageSelectionActivity::class.java)
+                    luggageLauncher(intent)
+                }
             ))
             add(AncillaryOptionData(
                 icon = Icons.Filled.Shield, // Hoặc dùng ảnh như trong hình
                 iconBackgroundColor = Color(0xFFFFEBEE), // Hồng nhạt
-                title = "Bảo hiểm du lịch Vietjet Travel Safe",
-                price = "144.000 VND",
+                title = "Bảo hiểm du lịch Vietjoke Travel Safe",
+                price = screenState.selectedInsuranceResult?.selectedInsuranceForAllLegs?.sumOf { leg ->
+                    leg.insuranceByPassengerIndex.values.flatten().sumOf { it.price }
+                }?.let { if (it > 0) String.format("%,.0f VND", it) else null },
                 details = {
-                    Column {
-                        Text("SGN \u2708 BMV", fontSize = 12.sp, color = Color.Gray)
-                        Text("Bảo hiểm du lịch", fontSize = 12.sp, color = Color.Gray)
+                    val legs = screenState.selectedInsuranceResult?.selectedInsuranceForAllLegs
+                    if (!legs.isNullOrEmpty()) {
+                        Row(Modifier.fillMaxWidth()) {
+                            legs.forEach { leg ->
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        "${leg.originCode} \u2708 ${leg.destinationCode}",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp
+                                    )
+                                    leg.insuranceByPassengerIndex.values.flatten().forEach {
+                                        Text("${it.name}", fontSize = 14.sp)
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
-                onClick = { Toast.makeText(context, "Bảo hiểm clicked", Toast.LENGTH_SHORT).show() }
+                onClick = {
+                    val intent = Intent(context, InsuranceSelectionActivity::class.java)
+                    insuranceLauncher(intent)
+                }
             ))
             add(AncillaryOptionData(
-                icon = Icons.Filled.SupportAgent, // Hoặc PersonSearch
-                iconBackgroundColor = Color(0xFFFFF9C4), // Vàng nhạt
-                title = "Dịch vụ theo hành khách",
-                onClick = { Toast.makeText(context, "Dịch vụ HK clicked", Toast.LENGTH_SHORT).show() }
-            ))
-            add(AncillaryOptionData(
-                icon = Icons.Filled.Pets,
-                iconBackgroundColor = Color(0xFFFFF9C4), // Vàng nhạt
-                title = "Mang theo thú cưng",
-                onClick = { Toast.makeText(context, "Thú cưng clicked", Toast.LENGTH_SHORT).show() }
+                icon = Icons.Filled.MoreHoriz,
+                iconBackgroundColor = Color(0xFFE3F2FD), // Xanh dương nhạt
+                title = "Dịch vụ khác",
+                price = screenState.selectedOtherServiceResult?.selectedServiceForAllLegs?.sumOf { leg ->
+                    leg.serviceByPassengerIndex.values.flatten().sumOf { it.price }
+                }?.let { if (it > 0) String.format("%,.0f VND", it) else null },
+                details = {
+                    val legs = screenState.selectedOtherServiceResult?.selectedServiceForAllLegs
+                    if (!legs.isNullOrEmpty()) {
+                        Row(Modifier.fillMaxWidth()) {
+                            legs.forEach { leg ->
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        "${leg.originCode} \u2708 ${leg.destinationCode}",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp
+                                    )
+                                    leg.serviceByPassengerIndex.values.flatten().forEach {
+                                        Text("${it.name}", fontSize = 14.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                onClick = {
+                    val intent = Intent(context, OtherServiceSelectionActivity::class.java)
+                    otherServiceLauncher(intent)
+                }
             ))
             // Thêm các lựa chọn khác nếu cần
+
+            // Update meal selection option
+            add(AncillaryOptionData(
+                icon = Icons.Filled.Restaurant,
+                iconBackgroundColor = Color(0xFFE3F2FD),
+                title = "Đặt suất ăn",
+                price = screenState.selectedMealsResult?.selectedMealsForAllLegs?.sumOf { leg ->
+                    leg.itemsByPassengerIndex.values.flatten().sumOf { it.addon.price * it.quantity }
+                }?.let { if (it > 0) String.format("%,.0f VND", it) else null },
+                details = {
+                    val legs = screenState.selectedMealsResult?.selectedMealsForAllLegs
+                    if (!legs.isNullOrEmpty()) {
+                        Column(Modifier.fillMaxWidth()) {
+                            legs.forEach { leg ->
+                                Text(
+                                    "${leg.originCode} \u2708 ${leg.destinationCode}",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp
+                                )
+                                leg.itemsByPassengerIndex.forEach { (passengerIndex, items) ->
+                                    val passenger = (FlightBookingModel.passengersAdult + FlightBookingModel.passengersChild).getOrNull(passengerIndex)
+                                    passenger?.let {
+                                        Text(
+                                            "${it.passengerType.take(1)} ${it.firstName.take(1)} ${it.lastName.take(1)}:",
+                                            fontSize = 14.sp,
+                                            color = Color.Gray
+                                        )
+                                        items.forEach { item ->
+                                            Text("- ${item.addon.name} x${item.quantity}", fontSize = 14.sp)
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.height(8.dp))
+                            }
+                        }
+                    }
+                },
+                onClick = {
+                    val intent = Intent(context, MealSelectionActivity::class.java)
+                    mealLauncher(intent)
+                }
+            ))
+
+            // Update drink selection option
+            add(AncillaryOptionData(
+                icon = Icons.Filled.LocalCafe,
+                iconBackgroundColor = Color(0xFFE3F2FD),
+                title = "Đặt đồ uống",
+                price = screenState.selectedDrinksResult?.selectedDrinksForAllLegs?.sumOf { leg ->
+                    leg.itemsByPassengerIndex.values.flatten().sumOf { it.addon.price * it.quantity }
+                }?.let { if (it > 0) String.format("%,.0f VND", it) else null },
+                details = {
+                    val legs = screenState.selectedDrinksResult?.selectedDrinksForAllLegs
+                    if (!legs.isNullOrEmpty()) {
+                        Column(Modifier.fillMaxWidth()) {
+                            legs.forEach { leg ->
+                                Text(
+                                    "${leg.originCode} \u2708 ${leg.destinationCode}",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp
+                                )
+                                leg.itemsByPassengerIndex.forEach { (passengerIndex, items) ->
+                                    val passenger = (FlightBookingModel.passengersAdult + FlightBookingModel.passengersChild).getOrNull(passengerIndex)
+                                    passenger?.let {
+                                        Text(
+                                            "${it.passengerType.take(1)} ${it.firstName.take(1)} ${it.lastName.take(1)}:",
+                                            fontSize = 14.sp,
+                                            color = Color.Gray
+                                        )
+                                        items.forEach { item ->
+                                            Text("- ${item.addon.name} x${item.quantity}", fontSize = 14.sp)
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.height(8.dp))
+                            }
+                        }
+                    }
+                },
+                onClick = {
+                    val intent = Intent(context, DrinkSelectionActivity::class.java)
+                    drinkLauncher(intent)
+                }
+            ))
         }
     }
     // --- Kết thúc dữ liệu mẫu ---
@@ -358,9 +636,123 @@ fun AncillaryScreen(
 
             Spacer(modifier = Modifier.height(16.dp)) // Khoảng cách cuối trang
 
-            // Nút tiếp tục (ví dụ)
+            // Nút tiếp tục
             Button(
-                onClick = { /* TODO: Chuyển sang màn hình thanh toán hoặc xác nhận */ },
+                onClick = {
+                    // Kiểm tra và gọi API book addons
+                    val sessionToken = FlightBookingModel.sessionToken
+                    if (sessionToken == null) {
+                        Toast.makeText(context, "Lỗi: Session token không hợp lệ", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+
+                    isLoading = true
+                    coroutineScope.launch {
+                        try {
+                            // Tạo danh sách request cho từng hành khách
+                            val passengers = FlightBookingModel.passengersAdult + FlightBookingModel.passengersChild
+                            var hasError = false
+
+                            // Xử lý từng hành khách cho cả chuyến đi và về
+                            val legs = if (FlightBookingModel.isRoundTrip) listOf(0, 1) else listOf(0)
+                            for (leg in legs) {
+                                val flightNumber = if (leg == 0) FlightBookingModel.flightNumber else FlightBookingModel.returnFlightNumber
+                                if (flightNumber == null) continue
+
+                                for (passenger in passengers) {
+                                    val addons = mutableListOf<AddonBookingItem>()
+
+                                    // Thêm các addon đã chọn cho chuyến đi
+                                    screenState.selectedSeatsResult?.let { result ->
+                                        result.selectedSeatsForAllLegs.getOrNull(leg)?.let { legInfo ->
+                                            legInfo.seatsByPassengerIndex[passengers.indexOf(passenger)]?.let { seat ->
+                                                // Thêm ghế vào addons nếu cần
+                                            }
+                                        }
+                                    }
+
+                                    screenState.selectedLuggageResult?.let { result ->
+                                        result.selectedLuggageForAllLegs.getOrNull(leg)?.let { legInfo ->
+                                            legInfo.luggageByPassengerIndex[passengers.indexOf(passenger)]?.forEach { luggage ->
+                                                addons.add(AddonBookingItem(luggage.id, 1))
+                                            }
+                                        }
+                                    }
+
+                                    screenState.selectedInsuranceResult?.let { result ->
+                                        result.selectedInsuranceForAllLegs.getOrNull(leg)?.let { legInfo ->
+                                            legInfo.insuranceByPassengerIndex[passengers.indexOf(passenger)]?.forEach { insurance ->
+                                                addons.add(AddonBookingItem(insurance.id, 1))
+                                            }
+                                        }
+                                    }
+
+                                    screenState.selectedOtherServiceResult?.let { result ->
+                                        result.selectedServiceForAllLegs.getOrNull(leg)?.let { legInfo ->
+                                            legInfo.serviceByPassengerIndex[passengers.indexOf(passenger)]?.forEach { service ->
+                                                addons.add(AddonBookingItem(service.id, 1))
+                                            }
+                                        }
+                                    }
+
+                                    // Thêm suất ăn cho chuyến tương ứng
+                                    screenState.selectedMealsResult?.let { result ->
+                                        result.selectedMealsForAllLegs.getOrNull(leg)?.let { legInfo ->
+                                            legInfo.itemsByPassengerIndex[passengers.indexOf(passenger)]?.forEach { meal ->
+                                                addons.add(AddonBookingItem(meal.addon.id, meal.quantity))
+                                            }
+                                        }
+                                    }
+
+                                    // Thêm đồ uống cho chuyến tương ứng
+                                    screenState.selectedDrinksResult?.let { result ->
+                                        result.selectedDrinksForAllLegs.getOrNull(leg)?.let { legInfo ->
+                                            legInfo.itemsByPassengerIndex[passengers.indexOf(passenger)]?.forEach { drink ->
+                                                addons.add(AddonBookingItem(drink.addon.id, drink.quantity))
+                                            }
+                                        }
+                                    }
+
+                                    // Nếu có addon được chọn, gọi API
+                                    if (addons.isNotEmpty()) {
+                                        val request = BookAddonsRequest(
+                                            sessionToken = sessionToken,
+                                            flightNumber = flightNumber,
+                                            passengerUuid = passenger.uuid,
+                                            addons = addons
+                                        )
+
+                                        val response = RetrofitInstance.addonApi.bookAddons(request)
+                                        if (response.isSuccessful && response.body() != null) {
+                                            val apiResponse = response.body()!!
+                                            if (apiResponse.status == 200) {
+                                                // Cập nhật session token mới
+                                                FlightBookingModel.sessionToken = apiResponse.data.sessionToken
+                                            } else {
+                                                hasError = true
+                                                Toast.makeText(context, apiResponse.message, Toast.LENGTH_SHORT).show()
+                                            }
+                                        } else {
+                                            hasError = true
+                                            Toast.makeText(context, "Lỗi khi đặt dịch vụ", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (!hasError) {
+                                // Chuyển sang màn hình tiếp theo
+                                Toast.makeText(context, "Đặt dịch vụ thành công", Toast.LENGTH_SHORT).show()
+                                // TODO: Chuyển sang màn hình PREVIEW
+                            }
+                        } catch (e: Exception) {
+                            Log.e("AncillaryActivity", "Error booking addons", e)
+                            Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_SHORT).show()
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

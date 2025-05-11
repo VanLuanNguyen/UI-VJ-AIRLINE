@@ -1,6 +1,7 @@
 package com.vietjoke.vn.retrofit
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import com.vietjoke.vn.retrofit.APIService.AddonApiService
 import com.vietjoke.vn.retrofit.APIService.AuthApiService
 import com.vietjoke.vn.retrofit.APIService.BookingApiService
 import com.vietjoke.vn.retrofit.APIService.FlightApiService
@@ -55,5 +56,9 @@ object RetrofitInstance {
 
     val seatApi: SeatApiService by lazy {
         retrofit.create(SeatApiService::class.java)
+    }
+
+    val addonApi: AddonApiService by lazy {
+        retrofit.create(AddonApiService::class.java)
     }
 }
