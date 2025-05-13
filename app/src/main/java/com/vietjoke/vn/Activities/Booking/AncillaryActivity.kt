@@ -584,11 +584,6 @@ fun AncillaryScreen(
             // TopAppBar đơn giản (tùy chọn)
             TopAppBar(
                 title = { Text("Dịch vụ bổ sung") },
-                navigationIcon = {
-                    IconButton(onClick = { /* TODO: Xử lý nút back */ }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF9C27B0), // Màu tím
                     titleContentColor = Color.White,

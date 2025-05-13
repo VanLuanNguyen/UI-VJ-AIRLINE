@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vietjoke.vn.Activities.Login.LoginActivity
+import com.vietjoke.vn.Activities.OTP.OTPVerificationActivity
 import com.vietjoke.vn.R
 import com.vietjoke.vn.retrofit.RetrofitInstance
 import com.vietjoke.vn.retrofit.ResponseDTO.RegisterRequestDTO
@@ -223,7 +224,8 @@ fun RegisterScreen() {
                                             when (registerResponse.status) {
                                                 200 -> {
                                                     Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
-                                                    val intent = Intent(context, LoginActivity::class.java)
+                                                    val intent = Intent(context, OTPVerificationActivity::class.java)
+                                                    intent.putExtra("email", email)
                                                     // Pass flight information if available
                                                     FlightBookingModel.flightNumber?.let { intent.putExtra("flightNumber", it) }
                                                     FlightBookingModel.fareCode?.let { intent.putExtra("fareCode", it) }

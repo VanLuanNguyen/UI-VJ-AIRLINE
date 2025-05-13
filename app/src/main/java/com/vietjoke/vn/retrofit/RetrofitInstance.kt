@@ -4,6 +4,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.vietjoke.vn.retrofit.APIService.AddonApiService
 import com.vietjoke.vn.retrofit.APIService.AuthApiService
 import com.vietjoke.vn.retrofit.APIService.BookingApiService
+import com.vietjoke.vn.retrofit.APIService.CountryApiService
 import com.vietjoke.vn.retrofit.APIService.FlightApiService
 import com.vietjoke.vn.retrofit.APIService.PaymentApiService
 import com.vietjoke.vn.retrofit.APIService.SeatApiService
@@ -65,5 +66,9 @@ object RetrofitInstance {
 
     val paymentApi: PaymentApiService by lazy {
         retrofit.create(PaymentApiService::class.java)
+    }
+
+    val countryApi: CountryApiService by lazy {
+        retrofit.create(CountryApiService::class.java)
     }
 }

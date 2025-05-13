@@ -45,6 +45,16 @@ import com.vietjoke.vn.retrofit.ResponseDTO.ErrorResponse
 import com.vietjoke.vn.retrofit.ResponseDTO.BookingResponseDTO
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.Search
+import com.vietjoke.vn.retrofit.ResponseDTO.CountryDTO
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.zIndex
 
 // --- BookingActivity, BookingScreen, PassengerForm, validatePassengers giữ nguyên ---
 // --- Bạn chỉ cần thay thế hoặc thêm hàm PassengerSection bên dưới ---
@@ -388,13 +398,17 @@ fun PassengerForm(
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    var countryCode by remember { mutableStateOf(passenger.countryCode) }
+    var countrySearchText by remember { mutableStateOf("") }  // Add this for search text
+    var showCountryDropdown by remember { mutableStateOf(false) }
+    var filteredCountries by remember { mutableStateOf(emptyList<CountryDTO>()) }
+    val coroutineScope = rememberCoroutineScope()
 
     // State variables for each field
     var firstName by remember { mutableStateOf(passenger.firstName) }
     var lastName by remember { mutableStateOf(passenger.lastName) }
     var dateOfBirth by remember { mutableStateOf(passenger.dateOfBirth) }
     var gender by remember { mutableStateOf(passenger.gender) }
-    var countryCode by remember { mutableStateOf(passenger.countryCode) }
     // ---- ID Type State ----
     val idTypes = listOf("DRIVER_LICENSE", "NATIONAL_ID", "OTHER", "PASSPORT")
     var idType by remember { mutableStateOf(passenger.idType) }
@@ -405,6 +419,21 @@ fun PassengerForm(
     var email by remember { mutableStateOf(passenger.email) }
     var accompanyingAdultFirstName by remember { mutableStateOf(passenger.accompanyingAdultFirstName) }
     var accompanyingAdultLastName by remember { mutableStateOf(passenger.accompanyingAdultLastName) }
+
+    // Load countries when the form is first displayed
+    LaunchedEffect(Unit) {
+        if (_countries.value.isEmpty()) {
+            loadCountries()
+        }
+    }
+
+    // Update filtered countries when search text changes
+    LaunchedEffect(countrySearchText) {
+        filteredCountries = _countries.value.filter { country ->
+            country.countryName.contains(countrySearchText, ignoreCase = true) ||
+            country.countryEngName.contains(countrySearchText, ignoreCase = true)
+        }
+    }
 
     // Update passenger model when state changes
     LaunchedEffect(firstName) { passenger.firstName = firstName }
@@ -565,21 +594,84 @@ fun PassengerForm(
         if (showAdditionalFields) { // Fields specific to Adults
             Spacer(modifier = Modifier.height(8.dp)) // Thêm Spacer trước nhóm field này
 
-            // Country Code
-            OutlinedTextField(
-                value = countryCode,
-                onValueChange = { countryCode = it },
-                label = { Text("Country Code") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { // Thêm icon gợi ý
-                    Icon(Icons.Default.Public, contentDescription = null)
-                },
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color(0xFF9C27B0),
-                    focusedLabelColor = Color(0xFF9C27B0),
-                    cursorColor = Color(0xFF9C27B0)
-                ),
-                singleLine = true
+            // Country Code with autocomplete
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = countrySearchText,
+                    onValueChange = { 
+                        countrySearchText = it
+                        showCountryDropdown = true
+                    },
+                    label = { Text("Country") },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = {
+                        Icon(Icons.Default.Public, contentDescription = null)
+                    },
+                    trailingIcon = {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFF9C27B0),
+                        focusedLabelColor = Color(0xFF9C27B0),
+                        cursorColor = Color(0xFF9C27B0)
+                    ),
+                    singleLine = true
+                )
+
+                // Dropdown for country suggestions
+                if (showCountryDropdown && filteredCountries.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 200.dp)
+                            .offset(y = 56.dp)
+                            .zIndex(1f), // Đảm bảo hiển thị trên các phần tử khác
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White.copy(alpha = 0.95f) // Thêm độ đục
+                        ),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 8.dp // Tăng độ nổi
+                        ),
+                        shape = RoundedCornerShape(8.dp) // Thêm bo góc
+                    ) {
+                        LazyColumn {
+                            items(filteredCountries) { country ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            countrySearchText = country.countryName
+                                            countryCode = country.countryCode
+                                            showCountryDropdown = false
+                                        }
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = country.countryName,
+                                        color = Color.Black,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                if (country != filteredCountries.last()) {
+                                    Divider()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Thêm click listener cho toàn bộ màn hình để ẩn dropdown khi click ra ngoài
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        showCountryDropdown = false
+                    }
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -735,6 +827,27 @@ fun PassengerForm(
     }
 }
 
+private val _countries = MutableStateFlow<List<CountryDTO>>(emptyList())
+val countries: StateFlow<List<CountryDTO>> = _countries.asStateFlow()
+
+private suspend fun loadCountries() {
+    try {
+        val response = RetrofitInstance.countryApi.getCountries()
+        if (response.isSuccessful) {
+            response.body()?.let { countryResponse ->
+                if (countryResponse.status == 200) {
+                    _countries.update { countryResponse.data }
+                } else {
+                    Log.e("CountryError", "Failed to load countries: ${countryResponse.message}")
+                }
+            }
+        } else {
+            Log.e("CountryError", "Failed to load countries: ${response.message()}")
+        }
+    } catch (e: Exception) {
+        Log.e("CountryError", "Failed to load countries", e)
+    }
+}
 
 private fun validatePassengers(): String? {
     // Validate Adult Passengers

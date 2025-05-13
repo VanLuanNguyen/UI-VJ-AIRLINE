@@ -5,8 +5,12 @@ import com.vietjoke.vn.retrofit.ResponseDTO.LoginRequestDTO
 import com.vietjoke.vn.retrofit.ResponseDTO.ErrorResponse
 import com.vietjoke.vn.retrofit.ResponseDTO.RegisterRequestDTO
 import com.vietjoke.vn.retrofit.ResponseDTO.RegisterApiResponse
+import com.vietjoke.vn.retrofit.ResponseDTO.VerifyOTPRequestDTO
+import com.vietjoke.vn.retrofit.ResponseDTO.VerifyOTPResponse
+import com.vietjoke.vn.retrofit.ResponseDTO.ResendOTPResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.Query
 import retrofit2.Response
 
 interface AuthApiService {
@@ -15,4 +19,10 @@ interface AuthApiService {
 
     @POST("api/v1/auth/register")
     suspend fun register(@Body request: RegisterRequestDTO): Response<RegisterApiResponse>
+
+    @POST("api/v1/auth/verify-otp")
+    suspend fun verifyOTP(@Body request: VerifyOTPRequestDTO): Response<VerifyOTPResponse>
+
+    @POST("api/v1/auth/resend-otp")
+    suspend fun resendOTP(@Query("email") email: String): Response<ResendOTPResponse>
 } 

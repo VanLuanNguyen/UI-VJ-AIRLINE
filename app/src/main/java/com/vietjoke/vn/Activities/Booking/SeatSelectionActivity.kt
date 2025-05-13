@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -598,8 +599,7 @@ fun SeatSelectionScreen_Sequential(
                 // --- Sơ đồ ghế (LazyVerticalGrid) ---
                 if (sortedSeats.isNotEmpty() && currentFlightInfo != null) {
                     LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 48.dp),
-                        // Thêm modifier để làm mờ nếu ở chế độ View
+                        columns = GridCells.Fixed(7),
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
@@ -607,10 +607,17 @@ fun SeatSelectionScreen_Sequential(
                             .background(themeColors.surface, RoundedCornerShape(12.dp))
                             .border(1.dp, themeColors.outlineVariant, RoundedCornerShape(12.dp))
                             .padding(horizontal = 8.dp, vertical = 12.dp)
-                        // .graphicsLayer(alpha = if (isInViewMode) 0.6f else 1f) // Làm mờ toàn bộ grid nếu ở view mode
+                            .graphicsLayer(alpha = if (isInViewMode) 0.6f else 1f)
                     ) {
                         // ... (Logic hiển thị header) ...
-                        sortedSeats.forEach { seatDto ->
+                        sortedSeats.forEachIndexed { index, seatDto ->
+                            // Thêm khoảng trắng sau mỗi 6 ghế, bắt đầu từ ghế thứ 3
+                            if (index > 0 && (index + 3) % 6 == 0) {
+                                item(span = { GridItemSpan(1) }) {
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                }
+                            }
+                            
                             item(key = "${currentFlightNumber}_${seatDto.id}") {
                                 val assignedSeatForThisStep =
                                     seatAssignments[currentFlightNumber]?.get(currentPassengerIndex)
@@ -631,7 +638,6 @@ fun SeatSelectionScreen_Sequential(
                                     seatInfo = seatDto,
                                     isSelected = isSelectedOnUI,
                                     isActuallyAvailable = isAvailableToSelect,
-                                    // <<< Vô hiệu hóa click dựa trên isInViewMode >>>
                                     isClickable = !isInViewMode,
                                     onClick = { clickedSeat ->
                                         // Logic onClick đơn giản chỉ cập nhật seatAssignments (state tạm thời)

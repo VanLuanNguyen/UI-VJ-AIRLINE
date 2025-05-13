@@ -37,7 +37,12 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.VietJokeAirline" />
-        <activity android:name=".Activities.Register.RegisterActivity"/>
+        <activity
+            android:name=".Activities.Register.RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activities.OTP.OTPVerificationActivity"
+            android:exported="false" />
         <activity android:name=".Activities.Booking.BookingActivity"/>
         <activity android:name=".Activities.Booking.AncillaryActivity"/>
         <activity android:name=".Activities.Booking.SeatSelectionActivity"/>
