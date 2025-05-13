@@ -51,6 +51,8 @@ import com.vietjoke.vn.Activities.Booking.BookingActivity
 import com.vietjoke.vn.Activities.Dashboard.DashboardActivity
 import com.vietjoke.vn.Activities.FlightList.FlightListActivity
 import com.vietjoke.vn.model.PassengerCountModel
+import com.vietjoke.vn.model.UserModel
+import com.vietjoke.vn.utils.LoginPreferences
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,6 +76,15 @@ fun LoginScreen() {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val json = Json { ignoreUnknownKeys = true }
+
+    // Load saved login info when screen is created
+    LaunchedEffect(Unit) {
+        if (LoginPreferences.isRememberMeEnabled(context)) {
+            username = LoginPreferences.getSavedUsername(context) ?: ""
+            password = LoginPreferences.getSavedPassword(context) ?: ""
+            rememberMe = true
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -283,8 +294,21 @@ fun LoginScreen() {
                                             response.body()?.let { loginResponse ->
                                                 when (loginResponse.status) {
                                                     200 -> {
+                                                        // Save token to UserModel
+                                                        loginResponse.data?.token?.let { token ->
+                                                            UserModel.token = token
+                                                        }
+                                                        
+                                                        // Save login info if remember me is checked
+                                                        LoginPreferences.saveLoginInfo(
+                                                            context = context,
+                                                            username = username,
+                                                            password = password,
+                                                            rememberMe = rememberMe
+                                                        )
+                                                        
                                                         Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
-
+                                                        
                                                         // --- CẬP NHẬT LOGIC XỬ LÝ CHUYẾN BAY ---
                                                         val currentIntent = (context as? LoginActivity)?.intent
                                                         val isRoundTrip = currentIntent?.getBooleanExtra(

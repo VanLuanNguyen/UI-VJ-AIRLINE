@@ -41,15 +41,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import com.vietjoke.vn.Activities.Booking.BookingActivity
 import com.vietjoke.vn.Activities.Login.LoginActivity
 import com.vietjoke.vn.R
 import com.vietjoke.vn.model.FlightBookingModel // Đảm bảo model đã cập nhật
+import com.vietjoke.vn.model.UserModel
 import com.vietjoke.vn.retrofit.ResponseDTO.FareClassDTO
 import com.vietjoke.vn.retrofit.ResponseDTO.FlightResponseDTO
 import kotlinx.coroutines.launch // For scrolling
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import com.vietjoke.vn.retrofit.ResponseDTO.FlightSelectionDTO
+import com.vietjoke.vn.retrofit.RetrofitInstance
+import com.vietjoke.vn.model.PassengerCountModel
+import com.vietjoke.vn.retrofit.ResponseDTO.SelectFlightRequestDTO
+import kotlinx.serialization.json.Json
 
 class FlightListActivity : AppCompatActivity() {
 
@@ -148,6 +155,7 @@ fun FlightListScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberLazyListState()
+    val json = Json { ignoreUnknownKeys = true }
 
     var showLoginDialog by remember { mutableStateOf(false) }
     var showingOutbound by remember { mutableStateOf(isRoundTrip) }
@@ -168,22 +176,21 @@ fun FlightListScreen(
     val screenTitle = when {
         isRoundTrip && showingOutbound -> "Chọn chuyến bay đi"
         isRoundTrip && !showingOutbound -> "Chọn chuyến bay về"
-        else -> "Chuyến bay khả dụng" // Hoặc "Available Flights" như gốc
+        else -> "Chuyến bay khả dụng"
     }
 
-    // Login Dialog (Logic không đổi)
+    // Login Dialog
     if (showLoginDialog) {
         AlertDialog(
             onDismissRequest = { showLoginDialog = false },
-            // Sử dụng Text của Material 2 theo yêu cầu giữ nguyên giao diện gốc
             title = { Text("Đăng nhập") },
             text = { Text("Bạn cần đăng nhập để tiếp tục đặt vé") },
             confirmButton = {
-                TextButton( // TextButton của M3 vẫn ổn trong Dialog M3
+                TextButton(
                     onClick = {
                         showLoginDialog = false
                         val intent = Intent(context, LoginActivity::class.java).apply {
-                            putExtra(FlightListActivity.EXTRA_SESSION_TOKEN, sessionToken)
+                            sessionToken?.let { putExtra(FlightListActivity.EXTRA_SESSION_TOKEN, it) }
                             putExtra(FlightListActivity.EXTRA_IS_ROUND_TRIP, isRoundTrip)
                             selectedOutbound?.let { (flight, fareCode) ->
                                 putExtra(if (isRoundTrip) "outboundFlightNumber" else "flightNumber", flight.flightNumber)
@@ -195,7 +202,7 @@ fun FlightListScreen(
                             }
                         }
                         FlightBookingModel.isRoundTrip = isRoundTrip
-                        FlightBookingModel.sessionToken = sessionToken
+                        sessionToken?.let { FlightBookingModel.sessionToken = it }
                         selectedOutbound?.let { (flight, fareCode) ->
                             FlightBookingModel.flightNumber = flight.flightNumber
                             FlightBookingModel.fareCode = fareCode
@@ -209,19 +216,19 @@ fun FlightListScreen(
                         }
                         context.startActivity(intent)
                     }
-                ) { androidx.compose.material3.Text("Đăng nhập") } // Text trong TextButton của M3
+                ) { androidx.compose.material3.Text("Đăng nhập") }
             },
             dismissButton = {
-                TextButton(onClick = { showLoginDialog = false }) { androidx.compose.material3.Text("Hủy") } // Text trong TextButton của M3
+                TextButton(onClick = { showLoginDialog = false }) { androidx.compose.material3.Text("Hủy") }
             }
         )
     }
 
-    // Main Screen Layout (Logic không đổi)
+    // Main Screen Layout
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = colorResource(R.color.grey01)) // Màu gốc
+            .background(color = colorResource(R.color.grey01))
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Top Bar (Logic không đổi)
@@ -262,21 +269,19 @@ fun FlightListScreen(
                 }
             }
 
-            // Flight List (Logic không đổi)
+            // Flight List
             if (currentFlights.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Không có chuyến bay nào.") // M2 Text
+                    Text("Không có chuyến bay nào.")
                 }
             } else {
-                LazyColumn( // LazyColumn gốc
-                    state = listState, // Thêm state để scroll
+                LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize()
-                        .padding(16.dp), // Padding gốc
-                    verticalArrangement = Arrangement.spacedBy(12.dp) // Spacing gốc
-                    // Không có contentPadding trong code gốc
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(currentFlights, key = { it.flightNumber + it.scheduledDeparture }) { flight ->
-                        // Sử dụng FlightTicketCard với giao diện gốc
                         FlightTicketCard(
                             flight = flight,
                             onFareClassSelected = { selectedFlight, fareCode ->
@@ -288,11 +293,146 @@ fun FlightListScreen(
                                         coroutineScope.launch { listState.scrollToItem(0) }
                                     } else {
                                         selectedReturn = selection
-                                        showLoginDialog = true
+
+                                        FlightBookingModel.isRoundTrip = isRoundTrip
+                                        sessionToken?.let { FlightBookingModel.sessionToken = it }
+                                        selectedOutbound?.let { (flight, fareCode) ->
+                                            FlightBookingModel.flightNumber = flight.flightNumber
+                                            FlightBookingModel.fareCode = fareCode
+                                        }
+                                        selectedReturn?.let { (flight, fareCode) ->
+                                            FlightBookingModel.returnFlightNumber = flight.flightNumber
+                                            FlightBookingModel.returnFareCode = fareCode
+                                        } ?: run {
+                                            FlightBookingModel.returnFlightNumber = null
+                                            FlightBookingModel.returnFareCode = null
+                                        }
+                                        // Kiểm tra trạng thái đăng nhập
+                                        if (UserModel.token!!.isNotEmpty()) {
+                                            coroutineScope.launch {
+                                                try {
+                                                    // Tạo danh sách chuyến bay cần chọn
+                                                    val flightSelections = mutableListOf<FlightSelectionDTO>()
+
+                                                    // Thêm chuyến bay đi
+                                                    selectedOutbound?.let { (outboundFlight, outboundFareCode) ->
+                                                        flightSelections.add(
+                                                            FlightSelectionDTO(
+                                                                flightNumber = outboundFlight.flightNumber,
+                                                                fareCode = outboundFareCode
+                                                            )
+                                                        )
+                                                    }
+
+                                                    // Thêm chuyến bay về
+                                                    flightSelections.add(
+                                                        FlightSelectionDTO(
+                                                            flightNumber = selectedFlight.flightNumber,
+                                                            fareCode = fareCode
+                                                        )
+                                                    )
+
+                                                    // Gọi API selectFlight
+                                                    val selectResponse = RetrofitInstance.flightApi.selectFlight(
+                                                        SelectFlightRequestDTO(
+                                                            sessionToken = sessionToken ?: "",
+                                                            flights = flightSelections
+                                                        )
+                                                    )
+
+                                                    if (selectResponse.status == 200 && selectResponse.data != null) {
+                                                        // Cập nhật sessionToken mới
+                                                        FlightBookingModel.sessionToken = selectResponse.data.sessionToken
+
+                                                        // Cập nhật số lượng hành khách
+                                                        PassengerCountModel.setCounts(
+                                                            adult = selectResponse.data.tripPassengersAdult ?: 1,
+                                                            child = selectResponse.data.tripPassengersChildren ?: 0,
+                                                            infant = selectResponse.data.tripPassengersInfant ?: 0
+                                                        )
+
+                                                        // Khởi tạo danh sách hành khách
+                                                        FlightBookingModel.initializePassengers()
+
+                                                        // Chuyển đến BookingActivity
+                                                        val intent = Intent(context, BookingActivity::class.java)
+                                                        context.startActivity(intent)
+                                                    } else {
+                                                        Toast.makeText(context, "Error selecting flight: ${selectResponse.message}", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        } else {
+                                            // Chưa đăng nhập, hiển thị dialog
+                                            showLoginDialog = true
+                                        }
                                     }
                                 } else {
                                     selectedOutbound = selection
-                                    showLoginDialog = true
+
+                                    FlightBookingModel.isRoundTrip = isRoundTrip
+                                    sessionToken?.let { FlightBookingModel.sessionToken = it }
+                                    selectedOutbound?.let { (flight, fareCode) ->
+                                        FlightBookingModel.flightNumber = flight.flightNumber
+                                        FlightBookingModel.fareCode = fareCode
+                                    }
+                                    selectedReturn?.let { (flight, fareCode) ->
+                                        FlightBookingModel.returnFlightNumber = flight.flightNumber
+                                        FlightBookingModel.returnFareCode = fareCode
+                                    } ?: run {
+                                        FlightBookingModel.returnFlightNumber = null
+                                        FlightBookingModel.returnFareCode = null
+                                    }
+                                    // Kiểm tra trạng thái đăng nhập
+                                    if (UserModel.token!!.isNotEmpty()) {
+                                        coroutineScope.launch {
+                                            try {
+                                                // Tạo danh sách chuyến bay cần chọn
+                                                val flightSelections = listOf(
+                                                    FlightSelectionDTO(
+                                                        flightNumber = selectedFlight.flightNumber,
+                                                        fareCode = fareCode
+                                                    )
+                                                )
+
+                                                // Gọi API selectFlight
+                                                val selectResponse = RetrofitInstance.flightApi.selectFlight(
+                                                    SelectFlightRequestDTO(
+                                                        sessionToken = sessionToken ?: "",
+                                                        flights = flightSelections
+                                                    )
+                                                )
+
+                                                if (selectResponse.status == 200 && selectResponse.data != null) {
+                                                    // Cập nhật sessionToken mới
+                                                    FlightBookingModel.sessionToken = selectResponse.data.sessionToken
+
+                                                    // Cập nhật số lượng hành khách
+                                                    PassengerCountModel.setCounts(
+                                                        adult = selectResponse.data.tripPassengersAdult ?: 1,
+                                                        child = selectResponse.data.tripPassengersChildren ?: 0,
+                                                        infant = selectResponse.data.tripPassengersInfant ?: 0
+                                                    )
+
+                                                    // Khởi tạo danh sách hành khách
+                                                    FlightBookingModel.initializePassengers()
+
+                                                    // Chuyển đến BookingActivity
+                                                    val intent = Intent(context, BookingActivity::class.java)
+                                                    context.startActivity(intent)
+                                                } else {
+                                                    Toast.makeText(context, "Error selecting flight: ${selectResponse.message}", Toast.LENGTH_SHORT).show()
+                                                }
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    } else {
+                                        // Chưa đăng nhập, hiển thị dialog
+                                        showLoginDialog = true
+                                    }
                                 }
                             }
                         )

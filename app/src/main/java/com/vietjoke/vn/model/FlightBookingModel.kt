@@ -22,6 +22,7 @@ object FlightBookingModel {
 
     // Token phiên làm việc
     var sessionToken: String? by mutableStateOf(null)
+    var orderId: String? = null
 
     var seatAssignmentsPerFlight: Map<String, Map<Int, String>> by mutableStateOf(emptyMap())
 

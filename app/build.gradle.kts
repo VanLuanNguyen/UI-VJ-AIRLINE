@@ -87,5 +87,6 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     implementation("androidx.compose.material:material-icons-extended:1.4.3")
-
+    implementation("com.paypal.android:card-payments:2.0.0")
+    implementation(libs.paypal.android.sdk)
 }

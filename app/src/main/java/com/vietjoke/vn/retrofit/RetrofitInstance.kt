@@ -5,6 +5,7 @@ import com.vietjoke.vn.retrofit.APIService.AddonApiService
 import com.vietjoke.vn.retrofit.APIService.AuthApiService
 import com.vietjoke.vn.retrofit.APIService.BookingApiService
 import com.vietjoke.vn.retrofit.APIService.FlightApiService
+import com.vietjoke.vn.retrofit.APIService.PaymentApiService
 import com.vietjoke.vn.retrofit.APIService.SeatApiService
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -60,5 +61,9 @@ object RetrofitInstance {
 
     val addonApi: AddonApiService by lazy {
         retrofit.create(AddonApiService::class.java)
+    }
+
+    val paymentApi: PaymentApiService by lazy {
+        retrofit.create(PaymentApiService::class.java)
     }
 }

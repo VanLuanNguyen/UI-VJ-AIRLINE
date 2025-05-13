@@ -46,6 +46,9 @@
         <activity android:name=".Activities.Booking.InsuranceSelectionActivity"/>
         <activity android:name=".Activities.Booking.DrinkSelectionActivity"/>
         <activity android:name=".Activities.Booking.OtherServiceSelectionActivity"/>
+        <activity android:name=".Activities.Preview.PreviewActivity"/>
+        <activity android:name=".Activities.Payment.PaymentActivity"/>
+        <activity android:name=".Activities.Profile.ProfileActivity"/>
     </application>
 
 </manifest>

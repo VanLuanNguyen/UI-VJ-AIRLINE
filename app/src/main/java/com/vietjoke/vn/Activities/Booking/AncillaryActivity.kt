@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -38,19 +37,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource // Để dùng drawable nếu cần
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vietjoke.vn.R // Import R của project bạn
+import com.vietjoke.vn.Activities.Preview.PreviewActivity
 import com.vietjoke.vn.model.FlightBookingModel
 import com.vietjoke.vn.model.SeatSelectionResult
 import com.vietjoke.vn.model.LuggageSelectionResult
-import com.vietjoke.vn.retrofit.APIService.AddonBookingItem
-import com.vietjoke.vn.retrofit.APIService.BookAddonsRequest
-import com.vietjoke.vn.retrofit.ResponseDTO.GetSeatsRequest
+import com.vietjoke.vn.retrofit.ResponseDTO.AddonBookingItem
+import com.vietjoke.vn.retrofit.ResponseDTO.BookAddonsRequest
 import com.vietjoke.vn.retrofit.RetrofitInstance
 import kotlinx.coroutines.launch
 
@@ -741,9 +737,17 @@ fun AncillaryScreen(
                             }
 
                             if (!hasError) {
-                                // Chuyển sang màn hình tiếp theo
-                                Toast.makeText(context, "Đặt dịch vụ thành công", Toast.LENGTH_SHORT).show()
-                                // TODO: Chuyển sang màn hình PREVIEW
+                                val response = RetrofitInstance.bookingApi.completeBooking(sessionToken)
+                                if (response.isSuccessful && response.body() != null) {
+                                    val apiResponse = response.body()!!
+                                    if (apiResponse.status == 200) {
+                                        Toast.makeText(context, "Đặt dịch vụ thành công", Toast.LENGTH_SHORT).show()
+                                        // Navigate to Preview screen
+                                        val intent = Intent(context, PreviewActivity::class.java)
+                                        context.startActivity(intent)
+                                        (context as? Activity)?.finish()
+                                    }
+                                }
                             }
                         } catch (e: Exception) {
                             Log.e("AncillaryActivity", "Error booking addons", e)
