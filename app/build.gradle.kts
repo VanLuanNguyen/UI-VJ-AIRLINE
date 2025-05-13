@@ -89,4 +89,5 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.4.3")
     implementation("com.paypal.android:card-payments:2.0.0")
     implementation(libs.paypal.android.sdk)
+    implementation("androidx.navigation:navigation-compose:2.7.7")
 }

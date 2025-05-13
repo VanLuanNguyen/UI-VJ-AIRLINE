@@ -81,6 +81,24 @@ fun OTPVerificationScreen(email: String) {
         )
     )
 
+    val checkScale by animateFloatAsState(
+        targetValue = if (showSuccessAnimation) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "checkScale"
+    )
+
+    val checkRotation by animateFloatAsState(
+        targetValue = if (showSuccessAnimation) 0f else -90f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "checkRotation"
+    )
+
     LaunchedEffect(key1 = timeLeft) {
         if (timeLeft > 0) {
             delay(1000)
@@ -166,7 +184,12 @@ fun OTPVerificationScreen(email: String) {
                             imageVector = Icons.Default.Check,
                             contentDescription = "Success",
                             tint = Color.White,
-                            modifier = Modifier.size(50.dp)
+                            modifier = Modifier
+                                .size(50.dp)
+                                .scale(checkScale)
+                                .graphicsLayer {
+                                    rotationZ = checkRotation
+                                }
                         )
                     }
                 }
