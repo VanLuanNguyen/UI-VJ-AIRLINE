@@ -3,7 +3,6 @@ package com.vietjoke.vn.navigation
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -11,10 +10,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.vietjoke.vn.Activities.Dashboard.MyBottomBar
+import com.vietjoke.vn.Activities.History.BookingDetailScreen
+import com.vietjoke.vn.Activities.History.HistoryScreen
 import com.vietjoke.vn.Activities.Login.LoginActivity
 import com.vietjoke.vn.Activities.Profile.ProfileScreen
 import com.vietjoke.vn.Activities.SearchFlight.SearchFlightActivity
@@ -27,6 +30,9 @@ sealed class Screen(val route: String) {
     object SearchFlight : Screen("search_flight")
     object History : Screen("history")
     object Profile : Screen("profile")
+    object BookingDetail : Screen("booking_detail/{bookingReference}") {
+        fun createRoute(bookingReference: String) = "booking_detail/$bookingReference"
+    }
 }
 
 @Composable
@@ -37,7 +43,7 @@ fun AppNavigation() {
 
     val currentRoute = navController.currentBackStackEntry?.destination?.route
     showBottomBar = when (currentRoute) {
-        Screen.Profile.route -> false
+        Screen.Profile.route, Screen.BookingDetail.route -> false
         else -> true
     }
 
@@ -54,7 +60,7 @@ fun AppNavigation() {
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.Home.route) {
-                LazyColumn(
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(color = colorResource(id = R.color.white))
@@ -71,13 +77,11 @@ fun AppNavigation() {
                 }
             }
             composable(Screen.History.route) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color = colorResource(id = R.color.white))
-                ) {
-                    // History screen content
-                }
+                HistoryScreen(
+                    onBookingClick = { bookingReference ->
+                        navController.navigate(Screen.BookingDetail.createRoute(bookingReference))
+                    }
+                )
             }
             composable(Screen.Profile.route) {
                 ProfileScreen(
@@ -94,6 +98,20 @@ fun AppNavigation() {
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         context.startActivity(intent)
                     }
+                )
+            }
+            composable(
+                route = Screen.BookingDetail.route,
+                arguments = listOf(
+                    navArgument("bookingReference") {
+                        type = NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                val bookingReference = backStackEntry.arguments?.getString("bookingReference") ?: ""
+                BookingDetailScreen(
+                    bookingReference = bookingReference,
+                    onBackClick = { navController.navigateUp() }
                 )
             }
         }
