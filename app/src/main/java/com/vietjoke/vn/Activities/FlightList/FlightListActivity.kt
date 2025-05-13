@@ -308,7 +308,7 @@ fun FlightListScreen(
                                             FlightBookingModel.returnFareCode = null
                                         }
                                         // Kiểm tra trạng thái đăng nhập
-                                        if (UserModel.token!!.isNotEmpty()) {
+                                        if (UserModel.token?.isNotEmpty() == true) {
                                             coroutineScope.launch {
                                                 try {
                                                     // Tạo danh sách chuyến bay cần chọn
@@ -386,7 +386,7 @@ fun FlightListScreen(
                                         FlightBookingModel.returnFareCode = null
                                     }
                                     // Kiểm tra trạng thái đăng nhập
-                                    if (UserModel.token!!.isNotEmpty()) {
+                                    if (UserModel.token?.isNotEmpty() == true) {
                                         coroutineScope.launch {
                                             try {
                                                 // Tạo danh sách chuyến bay cần chọn
