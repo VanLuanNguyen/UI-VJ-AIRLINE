@@ -9,6 +9,7 @@ interface AddonApiService {
 
     @GET("api/v1/booking/addons")
     suspend fun getAddons(
+        @Header("Authorization") authorization: String,
         @Query("addonCode") addonCode: String,
         @Query("sortBy") sortBy: String = "name",
         @Query("sortOrder") sortOrder: String = "asc",
@@ -21,6 +22,7 @@ interface AddonApiService {
 
     @POST("api/v1/booking/addons")
     suspend fun bookAddons(
+        @Header("Authorization") authorization: String,
         @Body request: BookAddonsRequest
     ): Response<BookAddonsResponse>
 }

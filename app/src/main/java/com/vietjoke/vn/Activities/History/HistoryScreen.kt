@@ -61,6 +61,8 @@ fun HistoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.height(56.dp)
+                    .offset(y = (-4).dp),
                 title = { Text("Lịch sử đặt vé") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF9C27B0),

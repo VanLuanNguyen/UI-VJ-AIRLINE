@@ -10,6 +10,7 @@ import retrofit2.http.Query
 interface PaymentApiService {
     @POST("api/v1/payment/create-order")
     suspend fun createOrder(
+        @Header("Authorization") authorization: String,
         @Query("sessionToken") sessionToken: String
     ): Response<PaymentResponseDTO>
     @POST("api/v1/payment/capture-order")

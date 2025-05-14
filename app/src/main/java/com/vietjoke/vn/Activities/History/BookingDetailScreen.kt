@@ -32,7 +32,11 @@ fun BookingDetailScreen(
     var bookingDetail by remember { mutableStateOf<BookingDetail?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    var showCancelDialog by remember { mutableStateOf(false) }
+    var isCancelling by remember { mutableStateOf(false) }
+    var shouldCancelBooking by remember { mutableStateOf(false) }
 
+    // Effect for loading booking details
     LaunchedEffect(bookingReference) {
         try {
             val token = UserModel.token
@@ -58,9 +62,78 @@ fun BookingDetailScreen(
         }
     }
 
+    // Effect for canceling booking
+    LaunchedEffect(shouldCancelBooking) {
+        if (shouldCancelBooking) {
+            isCancelling = true
+            try {
+                val token = UserModel.token
+                val response = RetrofitInstance.bookingApi.cancelBooking(
+                    authorization = "$token",
+                    bookingReference = bookingReference
+                )
+                if (response.isSuccessful) {
+                    response.body()?.let { cancelResponse ->
+                        if (cancelResponse.status == 200) {
+                            // Refresh booking details
+                            val detailResponse = RetrofitInstance.bookingApi.getBookingDetail(
+                                authorization = "$token",
+                                bookingReference = bookingReference
+                            )
+                            if (detailResponse.isSuccessful) {
+                                detailResponse.body()?.let { detail ->
+                                    if (detail.status == 200) {
+                                        bookingDetail = detail.data
+                                    }
+                                }
+                            }
+                        } else {
+                            error = cancelResponse.message
+                        }
+                    }
+                } else {
+                    error = "Không thể hủy chuyến"
+                }
+            } catch (e: Exception) {
+                error = "Lỗi kết nối: ${e.message}"
+            } finally {
+                isCancelling = false
+                shouldCancelBooking = false
+            }
+        }
+    }
+
+    if (showCancelDialog) {
+        AlertDialog(
+            onDismissRequest = { showCancelDialog = false },
+            title = { Text("Xác nhận hủy chuyến") },
+            text = { Text("Bạn có chắc chắn muốn hủy chuyến này không?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showCancelDialog = false
+                        shouldCancelBooking = true
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red
+                    )
+                ) {
+                    Text("Hủy chuyến")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCancelDialog = false }) {
+                    Text("Đóng")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.height(56.dp)
+                    .offset(y = (-4).dp),
                 title = { Text("Chi tiết đặt vé") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
@@ -86,7 +159,7 @@ fun BookingDetailScreen(
                 .padding(paddingValues)
         ) {
             when {
-                isLoading -> {
+                isLoading || isCancelling -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
                         color = Color(0xFF9C27B0)
@@ -123,6 +196,19 @@ fun BookingDetailScreen(
 
                         // Contact Information
                         ContactCard(bookingDetail!!)
+
+                        // Cancel Button (only show if booking is not cancelled)
+                        if (bookingDetail!!.statusName != "Cancelled") {
+                            Button(
+                                onClick = { showCancelDialog = true },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Red
+                                )
+                            ) {
+                                Text("Hủy chuyến")
+                            }
+                        }
                     }
                 }
             }

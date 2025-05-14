@@ -14,15 +14,20 @@ import retrofit2.http.Header
 
 interface BookingApiService {
     @POST("api/v1/booking/passenger-info")
-    suspend fun createBooking(@Body request: BookingRequestDTO): Response<BookingResponseDTO>
+    suspend fun createBooking(
+        @Header("Authorization") authorization: String,
+        @Body request: BookingRequestDTO
+    ): Response<BookingResponseDTO>
 
     @POST("api/v1/booking/service/complete")
     suspend fun completeBooking(
+        @Header("Authorization") authorization: String,
         @Query("sessionToken") sessionToken: String
     ): Response<BookingResponseDTO>
 
     @GET("api/v1/booking/preview")
     suspend fun getBookingPreview(
+        @Header("Authorization") authorization: String,
         @Query("sessionToken") sessionToken: String
     ): Response<BookingPreviewResponseDTO>
 
@@ -36,4 +41,10 @@ interface BookingApiService {
         @Header("Authorization") authorization: String,
         @Query("bookingReference") bookingReference: String
     ): Response<BookingDetailResponse>
+
+    @POST("api/v1/booking/cancel")
+    suspend fun cancelBooking(
+        @Header("Authorization") authorization: String,
+        @Query("bookingReference") bookingReference: String
+    ): Response<BookingResponseDTO>
 } 

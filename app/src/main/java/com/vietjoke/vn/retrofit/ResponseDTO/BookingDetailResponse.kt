@@ -56,7 +56,7 @@ data class FlightDetail(
     val airlineName: String,
     val aircraftRegistrationNumber: String,
     val aircraftModelCode: String,
-    val seatNumber: String,
+    val seatNumber: String?,
     val totalAmount: Double,
     val fareName: String,
     val addons: List<AddonDetails>

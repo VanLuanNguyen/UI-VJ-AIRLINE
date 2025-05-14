@@ -116,7 +116,9 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tài khoản") },
+                modifier = Modifier.height(56.dp)
+                    .offset(y = (-4).dp),
+                title = { Text("Tài khoản")},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF9C27B0),
                     titleContentColor = Color.White,

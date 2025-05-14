@@ -24,6 +24,9 @@ import com.vietjoke.vn.Activities.SearchFlight.SearchFlightActivity
 import com.vietjoke.vn.R
 import com.vietjoke.vn.model.UserModel
 import com.vietjoke.vn.utils.LoginPreferences
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
+import androidx.navigation.NavBackStackEntry
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -59,7 +62,21 @@ fun AppNavigation() {
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable(Screen.Home.route) {
+            composable(
+                route = Screen.Home.route,
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { -it },
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -68,7 +85,22 @@ fun AppNavigation() {
                     // Home screen content
                 }
             }
-            composable(Screen.SearchFlight.route) {
+            
+            composable(
+                route = Screen.SearchFlight.route,
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 // Launch SearchFlightActivity
                 LaunchedEffect(Unit) {
                     val intent = Intent(context, SearchFlightActivity::class.java)
@@ -76,14 +108,44 @@ fun AppNavigation() {
                     navController.navigateUp() // Return to previous screen
                 }
             }
-            composable(Screen.History.route) {
+            
+            composable(
+                route = Screen.History.route,
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 HistoryScreen(
                     onBookingClick = { bookingReference ->
                         navController.navigate(Screen.BookingDetail.createRoute(bookingReference))
                     }
                 )
             }
-            composable(Screen.Profile.route) {
+            
+            composable(
+                route = Screen.Profile.route,
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
                 ProfileScreen(
                     onBackClick = { navController.navigateUp() },
                     onLogoutClick = {
@@ -100,13 +162,26 @@ fun AppNavigation() {
                     }
                 )
             }
+            
             composable(
                 route = Screen.BookingDetail.route,
                 arguments = listOf(
                     navArgument("bookingReference") {
                         type = NavType.StringType
                     }
-                )
+                ),
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                }
             ) { backStackEntry ->
                 val bookingReference = backStackEntry.arguments?.getString("bookingReference") ?: ""
                 BookingDetailScreen(
