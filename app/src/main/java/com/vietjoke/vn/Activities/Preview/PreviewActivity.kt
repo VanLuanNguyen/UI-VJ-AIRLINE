@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vietjoke.vn.Activities.Payment.PaymentActivity
 import com.vietjoke.vn.model.FlightBookingModel
+import com.vietjoke.vn.model.UserModel
 import com.vietjoke.vn.retrofit.RetrofitInstance
 import com.vietjoke.vn.retrofit.ResponseDTO.*
 import kotlinx.coroutines.launch
@@ -56,7 +57,10 @@ fun PreviewScreen() {
         }
 
         try {
-            val response = RetrofitInstance.bookingApi.getBookingPreview(sessionToken)
+            val response = RetrofitInstance.bookingApi.getBookingPreview(
+                authorization = UserModel.token ?: "",
+                sessionToken = sessionToken
+            )
             if (response.isSuccessful && response.body() != null) {
                 val apiResponse = response.body()!!
                 if (apiResponse.status == 200) {
@@ -266,7 +270,9 @@ fun PreviewContent(data: BookingPreviewData) {
                     isLoading = true
                     coroutineScope.launch {
                         try {
-                            val response = RetrofitInstance.paymentApi.createOrder(sessionToken)
+                            val response = RetrofitInstance.paymentApi.createOrder(
+                                authorization = UserModel.token ?: "",
+                                sessionToken)
                             if (response.isSuccessful && response.body() != null) {
                                 val apiResponse = response.body()!!
                                 if (apiResponse.status == 200) {

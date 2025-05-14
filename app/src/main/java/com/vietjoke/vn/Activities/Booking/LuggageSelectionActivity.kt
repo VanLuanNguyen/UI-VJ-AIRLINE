@@ -34,6 +34,7 @@ import com.vietjoke.vn.model.FlightBookingModel
 import com.vietjoke.vn.model.PassengerModel
 import com.vietjoke.vn.model.LuggageSelectionResult
 import com.vietjoke.vn.model.SelectedLuggageInfoForLeg
+import com.vietjoke.vn.model.UserModel
 import com.vietjoke.vn.retrofit.ResponseDTO.AddonDTO
 import com.vietjoke.vn.retrofit.RetrofitInstance
 import kotlinx.coroutines.launch
@@ -75,6 +76,7 @@ fun LuggageSelectionScreen() {
                 return
             }
             val response = RetrofitInstance.addonApi.getAddons(
+                authorization = UserModel.token ?: "",
                 addonCode = "LUGGAGE",
                 sessionToken = sessionToken,
                 flightNumber = flightNumber

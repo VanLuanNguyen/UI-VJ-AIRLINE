@@ -45,6 +45,7 @@ import com.vietjoke.vn.Activities.Preview.PreviewActivity
 import com.vietjoke.vn.model.FlightBookingModel
 import com.vietjoke.vn.model.SeatSelectionResult
 import com.vietjoke.vn.model.LuggageSelectionResult
+import com.vietjoke.vn.model.UserModel
 import com.vietjoke.vn.retrofit.ResponseDTO.AddonBookingItem
 import com.vietjoke.vn.retrofit.ResponseDTO.BookAddonsRequest
 import com.vietjoke.vn.retrofit.RetrofitInstance
@@ -356,7 +357,9 @@ fun AncillaryScreen(
                         try {
                             Log.d("AncillaryScreen", "Đang gọi API getSeats...")
                             // Gọi API lấy dữ liệu sơ đồ ghế
-                            val response = RetrofitInstance.flightApi.getSeats(token = currentSessionTokenOnClick)
+                            val response = RetrofitInstance.flightApi.getSeats(
+                                authorization = UserModel.token ?: "",
+                                token = currentSessionTokenOnClick)
                             Log.d("AncillaryScreen", "API getSeats response: Code=${response.code()}, Success=${response.isSuccessful}")
 
                             if (response.isSuccessful && response.body() != null) {
@@ -707,13 +710,17 @@ fun AncillaryScreen(
                                     // Nếu có addon được chọn, gọi API
                                     if (addons.isNotEmpty()) {
                                         val request = BookAddonsRequest(
+                                            authorization = UserModel.token ?: "",
                                             sessionToken = sessionToken,
                                             flightNumber = flightNumber,
                                             passengerUuid = passenger.uuid,
-                                            addons = addons
+                                            addons = addons.map { AddonBookingItem(it.addonId, it.quantity) }
                                         )
 
-                                        val response = RetrofitInstance.addonApi.bookAddons(request)
+                                        val response = RetrofitInstance.addonApi.bookAddons(
+                                            authorization = UserModel.token ?: "",
+                                            request = request
+                                        )
                                         if (response.isSuccessful && response.body() != null) {
                                             val apiResponse = response.body()!!
                                             if (apiResponse.status == 200) {
@@ -732,7 +739,10 @@ fun AncillaryScreen(
                             }
 
                             if (!hasError) {
-                                val response = RetrofitInstance.bookingApi.completeBooking(sessionToken)
+                                val response = RetrofitInstance.bookingApi.completeBooking(
+                                    authorization = UserModel.token ?: "",
+                                    sessionToken = sessionToken
+                                )
                                 if (response.isSuccessful && response.body() != null) {
                                     val apiResponse = response.body()!!
                                     if (apiResponse.status == 200) {

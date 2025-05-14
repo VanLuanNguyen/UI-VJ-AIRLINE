@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 import com.vietjoke.vn.model.MealSelectionResult
 import com.vietjoke.vn.model.SelectedMealInfoForLeg
 import com.vietjoke.vn.model.MealItem
+import com.vietjoke.vn.model.UserModel
 
 class MealSelectionActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,6 +85,7 @@ fun MealSelectionScreen() {
                 return
             }
             val response = RetrofitInstance.addonApi.getAddons(
+                authorization = UserModel.token ?: "",
                 addonCode = "MEAL",
                 sessionToken = sessionToken,
                 flightNumber = flightNumber,

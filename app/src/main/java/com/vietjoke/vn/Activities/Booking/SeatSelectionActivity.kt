@@ -45,6 +45,7 @@ import com.vietjoke.vn.model.PassengerModel
 // Đảm bảo bạn đã import các data class này (đã định nghĩa ở các bước trước)
 import com.vietjoke.vn.model.SeatSelectionResult
 import com.vietjoke.vn.model.SelectedSeatInfoForLeg
+import com.vietjoke.vn.model.UserModel
 import com.vietjoke.vn.retrofit.ResponseDTO.*
 import com.vietjoke.vn.retrofit.RetrofitInstance
 import kotlinx.coroutines.launch
@@ -391,7 +392,10 @@ fun SeatSelectionScreen_Sequential(
         )
         Log.i("SequentialSeat", "Gọi API hủy ghế: $request")
         try {
-            val response = RetrofitInstance.seatApi.releaseSeat(request)
+            val response = RetrofitInstance.seatApi.releaseSeat(
+                authorization = UserModel.token ?: "",
+                request = request
+            )
             if (response.isSuccessful) {
                 val apiResponse = response.body()
                 if (apiResponse != null && apiResponse.status == 200 || response.code() == 204 || response.code() == 200) {
@@ -721,12 +725,15 @@ fun SeatSelectionScreen_Sequential(
                                     // --- XỬ LÝ XÁC NHẬN GHẾ MỚI ---
                                     else if (buttonActionType == "CONFIRM_NEW" && seatSelectedTemporarily != null) {
                                         val request = ReserveSeatRequest(
-                                            currentFlightNumber,
-                                            seatSelectedTemporarily,
-                                            passengerUUID,
-                                            currentSessionToken!!
+                                            flightNumber = currentFlightNumber,
+                                            seatNumber = seatSelectedTemporarily,
+                                            passengerUUID = passengerUUID,
+                                            sessionToken = currentSessionToken!!
                                         )
-                                        val response = RetrofitInstance.seatApi.reserveSeat(request)
+                                        val response = RetrofitInstance.seatApi.reserveSeat(
+                                            authorization = UserModel.token ?: "",
+                                            request = request
+                                        )
 
                                         if (response.isSuccessful && response.body() != null && response.body()!!.status == 200 && response.body()!!.data != null) {
                                             // Reserve thành công

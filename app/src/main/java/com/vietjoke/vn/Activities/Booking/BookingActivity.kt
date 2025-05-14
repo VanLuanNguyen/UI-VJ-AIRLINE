@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.zIndex
+import com.vietjoke.vn.model.UserModel
 
 // --- BookingActivity, BookingScreen, PassengerForm, validatePassengers giữ nguyên ---
 // --- Bạn chỉ cần thay thế hoặc thêm hàm PassengerSection bên dưới ---
@@ -259,7 +260,10 @@ fun BookingScreen() {
                                         sessionToken = FlightBookingModel.sessionToken ?: ""
                                     )
                                     Log.d("BookingDebug", "Sending Request: ${json.encodeToString(BookingRequestDTO.serializer(), bookingRequest)}")
-                                    val response = RetrofitInstance.bookingApi.createBooking(bookingRequest)
+                                    val response = RetrofitInstance.bookingApi.createBooking(
+                                        authorization = UserModel.token ?: "",
+                                        request = bookingRequest
+                                    )
 
                                     if (response.isSuccessful) {
                                         response.body()?.let { bookingResponse ->

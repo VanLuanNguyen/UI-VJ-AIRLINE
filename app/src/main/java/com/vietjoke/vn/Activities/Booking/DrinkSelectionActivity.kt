@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 import com.vietjoke.vn.model.DrinkSelectionResult
 import com.vietjoke.vn.model.SelectedDrinkInfoForLeg
 import com.vietjoke.vn.model.DrinkItem
+import com.vietjoke.vn.model.UserModel
 
 class DrinkSelectionActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,6 +85,7 @@ fun DrinkSelectionScreen() {
                 return
             }
             val response = RetrofitInstance.addonApi.getAddons(
+                authorization = UserModel.token ?: "",
                 addonCode = "DRINK",
                 sessionToken = sessionToken,
                 flightNumber = flightNumber,

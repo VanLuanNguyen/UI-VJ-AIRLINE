@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.vietjoke.vn.model.FlightBookingModel
 import com.vietjoke.vn.model.PassengerModel
+import com.vietjoke.vn.model.UserModel
 import com.vietjoke.vn.retrofit.ResponseDTO.AddonDTO
 import com.vietjoke.vn.retrofit.RetrofitInstance
 import kotlinx.coroutines.launch
@@ -74,6 +75,7 @@ fun OtherServiceSelectionScreen() {
                 return
             }
             val response = RetrofitInstance.addonApi.getAddons(
+                authorization = UserModel.token ?: "",
                 addonCode = "OTHER",
                 sessionToken = sessionToken,
                 flightNumber = flightNumber
