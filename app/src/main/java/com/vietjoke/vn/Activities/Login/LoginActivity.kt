@@ -359,11 +359,10 @@ fun LoginScreen() {
                                                         if (flightSelections.isNotEmpty() && sessionToken != null) {
                                                             Log.d("LoginSelectFlight", "Calling selectFlight API with ${flightSelections.size} flights and token: $sessionToken")
                                                             try {
-                                                                // Gọi API selectFlight với danh sách chuyến bay đã tạo
                                                                 val selectResponse = RetrofitInstance.flightApi.selectFlight(
                                                                     SelectFlightRequestDTO(
                                                                         sessionToken = sessionToken,
-                                                                        flights = flightSelections // <-- Sử dụng danh sách đã tạo
+                                                                        flights = flightSelections
                                                                     )
                                                                 )
 

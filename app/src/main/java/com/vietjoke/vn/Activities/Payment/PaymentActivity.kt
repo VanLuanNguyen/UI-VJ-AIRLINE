@@ -38,6 +38,8 @@ import com.paypal.android.corepayments.Environment
 import com.vietjoke.vn.Activities.Dashboard.DashboardActivity
 import com.vietjoke.vn.model.FlightBookingModel
 import com.vietjoke.vn.model.UserModel
+import com.vietjoke.vn.retrofit.ResponseDTO.SelectFlightDataDTO
+import com.vietjoke.vn.retrofit.ResponseDTO.SelectFlightResponseDTO
 import com.vietjoke.vn.retrofit.RetrofitInstance
 import kotlinx.coroutines.launch
 
@@ -139,6 +141,10 @@ class PaymentActivity : ComponentActivity(), CardApproveOrderCallback {
                             if (response.isSuccessful && response.body() != null) {
                                 val apiResponse = response.body()!!
                                 if (apiResponse.status == 200) {
+                                    // Clear session data after successful payment
+                                    FlightBookingModel.clearSessionData()
+                                    SelectFlightResponseDTO.clear()
+                                    SelectFlightDataDTO.clear()
                                     showSuccessDialog = true
                                 } else {
                                     Toast.makeText(this@PaymentActivity, apiResponse.message, Toast.LENGTH_SHORT).show()

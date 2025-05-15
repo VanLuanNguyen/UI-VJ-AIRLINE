@@ -29,7 +29,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.vietjoke.vn.model.UserModel
+import com.vietjoke.vn.model.FlightBookingModel
+import com.vietjoke.vn.model.PassengerCountModel
 import com.vietjoke.vn.retrofit.ResponseDTO.UserProfileData
+import com.vietjoke.vn.retrofit.ResponseDTO.SelectFlightResponseDTO
+import com.vietjoke.vn.retrofit.ResponseDTO.SelectFlightDataDTO
 import com.vietjoke.vn.retrofit.RetrofitInstance
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -50,6 +54,23 @@ fun ProfileScreen(
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var isUpdatingAvatar by remember { mutableStateOf(false) }
+
+    // Function to clear all data when logging out
+    fun clearAllData() {
+        // Clear UserModel data
+        UserModel.clearToken()
+        
+        // Clear FlightBookingModel data
+        FlightBookingModel.clear()
+        FlightBookingModel.clearSessionData()
+        
+        // Clear PassengerCountModel data
+        PassengerCountModel.clear()
+        
+        // Clear SelectFlight data
+        SelectFlightResponseDTO.clear()
+        SelectFlightDataDTO.clear()
+    }
 
     // Image picker launcher
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -273,7 +294,10 @@ fun ProfileScreen(
 
                     // Logout Button
                     Button(
-                        onClick = onLogoutClick,
+                        onClick = {
+                            clearAllData()
+                            onLogoutClick()
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),

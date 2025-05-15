@@ -51,6 +51,13 @@ object FlightBookingModel {
         // PassengerCountModel.clear()
     }
 
+    // Add new function to clear session data
+    fun clearSessionData() {
+        sessionToken = null
+        orderId = null
+        clearSeats()
+    }
+
     // Hàm initializePassengers giữ nguyên logic
     fun initializePassengers() {
         // Giả sử PassengerCountModel tồn tại

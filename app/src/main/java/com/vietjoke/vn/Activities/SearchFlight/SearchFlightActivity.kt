@@ -286,9 +286,6 @@ fun SearchFlightScreen() {
 
                                                 // --- MODIFICATION FOR ROUND TRIP ---
                                                 if (isRoundTrip) {
-                                                    // Attempt to extract outbound and return lists
-                                                    // **ASSUMPTION:** The map's values contain the lists, first is outbound, second is return.
-                                                    // **VERIFY THIS LOGIC AGAINST YOUR API RESPONSE STRUCTURE!**
                                                     val flightLists = travelOptionsMap.values.toList()
 
                                                     if (flightLists.size >= 2) {

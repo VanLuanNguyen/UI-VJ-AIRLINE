@@ -23,6 +23,10 @@ object UserModel {
         _currentUserProfile = null
     }
 
+    fun clear() {
+        clearToken()
+    }
+
     fun updateProfile(profile: UserProfileData) {
         _currentUserProfile = profile
     }

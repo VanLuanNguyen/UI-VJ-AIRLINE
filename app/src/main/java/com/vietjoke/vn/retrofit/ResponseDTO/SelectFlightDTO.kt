@@ -20,7 +20,13 @@ data class SelectFlightResponseDTO(
     val message: String,
     val data: SelectFlightDataDTO?,
     val timestamp: String
-)
+) {
+    companion object {
+        fun clear() {
+            // Clear any static data if needed
+        }
+    }
+}
 
 @Serializable
 data class SelectFlightDataDTO(
@@ -29,4 +35,10 @@ data class SelectFlightDataDTO(
     val tripPassengersAdult: Int,
     val tripPassengersChildren: Int,
     val tripPassengersInfant: Int
-) 
+) {
+    companion object {
+        fun clear() {
+            // Clear any static data if needed
+        }
+    }
+} 
