@@ -41,7 +41,8 @@ import java.io.File
 @Composable
 fun ProfileScreen(
     onBackClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onEditClick: () -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -103,6 +104,7 @@ fun ProfileScreen(
             )
             if (response.status == 200) {
                 userProfile = response.data
+                UserModel.updateProfile(response.data)
             } else {
                 error = response.message
             }
@@ -119,6 +121,15 @@ fun ProfileScreen(
                 modifier = Modifier.height(56.dp)
                     .offset(y = (-4).dp),
                 title = { Text("Tài khoản")},
+                actions = {
+                    IconButton(onClick = onEditClick) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Profile",
+                            tint = Color.White
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF9C27B0),
                     titleContentColor = Color.White,

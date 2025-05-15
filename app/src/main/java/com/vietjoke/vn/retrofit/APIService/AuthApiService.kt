@@ -8,6 +8,7 @@ import com.vietjoke.vn.retrofit.ResponseDTO.RegisterApiResponse
 import com.vietjoke.vn.retrofit.ResponseDTO.VerifyOTPRequestDTO
 import com.vietjoke.vn.retrofit.ResponseDTO.VerifyOTPResponse
 import com.vietjoke.vn.retrofit.ResponseDTO.ResendOTPResponse
+import com.vietjoke.vn.retrofit.ResponseDTO.UserUpdateRequestDTO
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Query
@@ -43,4 +44,10 @@ interface AuthApiService {
         @Header("Authorization") authorization: String,
         @Part avatar: MultipartBody.Part
     ): UserProfileResponse
+
+    @PUT("api/v1/user/update-profile")
+    suspend fun updateProfile(
+        @Header("Authorization") authorization: String,
+        @Body request: UserUpdateRequestDTO
+    ): Response<UserProfileResponse>
 } 

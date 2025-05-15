@@ -76,13 +76,14 @@ dependencies {
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
     // Retrofit core
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
-// Kotlinx serialization converter for Retrofit
+    // Kotlinx serialization converter for Retrofit
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:0.8.0")
 
-// Kotlinx JSON
+    // Kotlinx JSON
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-// OkHttp 4.9.0+ (bắt buộc để có toMediaType)
+    // OkHttp 4.9.0+ (bắt buộc để có toMediaType)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 

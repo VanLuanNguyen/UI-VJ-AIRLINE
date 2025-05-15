@@ -20,6 +20,7 @@ import com.vietjoke.vn.Activities.History.BookingDetailScreen
 import com.vietjoke.vn.Activities.History.HistoryScreen
 import com.vietjoke.vn.Activities.Login.LoginActivity
 import com.vietjoke.vn.Activities.Profile.ProfileScreen
+import com.vietjoke.vn.Activities.Profile.EditProfileScreen
 import com.vietjoke.vn.Activities.SearchFlight.SearchFlightActivity
 import com.vietjoke.vn.R
 import com.vietjoke.vn.model.UserModel
@@ -33,6 +34,7 @@ sealed class Screen(val route: String) {
     object SearchFlight : Screen("search_flight")
     object History : Screen("history")
     object Profile : Screen("profile")
+    object EditProfile : Screen("edit_profile")
     object BookingDetail : Screen("booking_detail/{bookingReference}") {
         fun createRoute(bookingReference: String) = "booking_detail/$bookingReference"
     }
@@ -46,7 +48,7 @@ fun AppNavigation() {
 
     val currentRoute = navController.currentBackStackEntry?.destination?.route
     showBottomBar = when (currentRoute) {
-        Screen.Profile.route, Screen.BookingDetail.route -> false
+        Screen.Profile.route, Screen.BookingDetail.route, Screen.EditProfile.route -> false
         else -> true
     }
 
@@ -159,7 +161,29 @@ fun AppNavigation() {
                         val intent = Intent(context, LoginActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         context.startActivity(intent)
-                    }
+                    },
+                    onEditClick = { navController.navigate(Screen.EditProfile.route) }
+                )
+            }
+            
+            composable(
+                route = Screen.EditProfile.route,
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                }
+            ) {
+                EditProfileScreen(
+                    onBackClick = { navController.navigateUp() },
+                    userProfile = UserModel.currentUserProfile ?: return@composable
                 )
             }
             
