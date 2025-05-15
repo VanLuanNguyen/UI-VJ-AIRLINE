@@ -53,7 +53,7 @@
         <activity android:name=".Activities.Booking.OtherServiceSelectionActivity"/>
         <activity android:name=".Activities.Preview.PreviewActivity"/>
         <activity android:name=".Activities.Payment.PaymentActivity"/>
-
+        <activity android:name=".Activities.ForgotPassword.ForgotPasswordActivity"/>
     </application>
 
 </manifest>

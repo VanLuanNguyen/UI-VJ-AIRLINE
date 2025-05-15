@@ -249,7 +249,10 @@ fun LoginScreen() {
                             )
                         }
 
-                        TextButton(onClick = { /* TODO: Handle forgot password */ }) {
+                        TextButton(onClick = { 
+                            val intent = Intent(context, com.vietjoke.vn.Activities.ForgotPassword.ForgotPasswordActivity::class.java)
+                            context.startActivity(intent)
+                        }) {
                             Text(
                                 text = "Forgot Password?",
                                 color = colorResource(R.color.orange),

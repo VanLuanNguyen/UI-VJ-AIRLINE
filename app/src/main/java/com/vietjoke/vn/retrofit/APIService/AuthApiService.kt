@@ -9,6 +9,7 @@ import com.vietjoke.vn.retrofit.ResponseDTO.VerifyOTPRequestDTO
 import com.vietjoke.vn.retrofit.ResponseDTO.VerifyOTPResponse
 import com.vietjoke.vn.retrofit.ResponseDTO.ResendOTPResponse
 import com.vietjoke.vn.retrofit.ResponseDTO.UserUpdateRequestDTO
+import com.vietjoke.vn.retrofit.ResponseDTO.ForgotPasswordResponse
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Query
@@ -32,6 +33,9 @@ interface AuthApiService {
 
     @POST("api/v1/auth/resend-otp")
     suspend fun resendOTP(@Query("email") email: String): Response<ResendOTPResponse>
+
+    @POST("api/v1/auth/forgot-password")
+    suspend fun forgotPassword(@Query("email") email: String): Response<ForgotPasswordResponse>
 
     @GET("api/v1/user/profile")
     suspend fun getUserProfile(

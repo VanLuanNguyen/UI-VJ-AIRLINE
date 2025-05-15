@@ -45,15 +45,16 @@ class OTPVerificationActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val email = intent.getStringExtra("email") ?: ""
+        val isPasswordReset = intent.getBooleanExtra("isPasswordReset", false)
         setContent {
-            OTPVerificationScreen(email = email)
+            OTPVerificationScreen(email = email, isPasswordReset = isPasswordReset)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OTPVerificationScreen(email: String) {
+fun OTPVerificationScreen(email: String, isPasswordReset: Boolean) {
     var otp by remember { mutableStateOf("") }
     var timeLeft by remember { mutableStateOf(60) }
     var isResendEnabled by remember { mutableStateOf(false) }
@@ -149,7 +150,7 @@ fun OTPVerificationScreen(email: String) {
 
                 // Title and description
                 Text(
-                    text = "Verify Your Email",
+                    text = if (isPasswordReset) "Reset Password" else "Verify Your Email",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
@@ -158,7 +159,10 @@ fun OTPVerificationScreen(email: String) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "We've sent a verification code to your email",
+                    text = if (isPasswordReset) 
+                        "Enter the verification code sent to your email to reset your password"
+                    else
+                        "We've sent a verification code to your email",
                     fontSize = 16.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
@@ -303,7 +307,8 @@ fun OTPVerificationScreen(email: String) {
                                     val response = RetrofitInstance.authApi.verifyOTP(
                                         VerifyOTPRequestDTO(
                                             email = email,
-                                            otp = otp
+                                            otp = otp,
+                                            otpType = if (isPasswordReset) "RESET" else null
                                         )
                                     )
                                     
@@ -313,6 +318,17 @@ fun OTPVerificationScreen(email: String) {
                                                 200 -> {
                                                     showSuccessAnimation = true
                                                     delay(1500) // Show success animation
+                                                    
+                                                    if (isPasswordReset) {
+                                                        // For password reset, just show success message and go back to login
+                                                        Toast.makeText(
+                                                            context,
+                                                            "New password has been sent to your email",
+                                                            Toast.LENGTH_LONG
+                                                        ).show()
+                                                    }
+                                                    
+                                                    // Navigate to LoginActivity
                                                     val intent = Intent(context, LoginActivity::class.java)
                                                     context.startActivity(intent)
                                                     (context as OTPVerificationActivity).finish()
