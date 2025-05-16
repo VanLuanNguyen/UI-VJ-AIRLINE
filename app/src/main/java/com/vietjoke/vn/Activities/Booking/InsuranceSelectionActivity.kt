@@ -27,7 +27,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vietjoke.vn.model.FlightBookingModel
-import com.vietjoke.vn.model.PassengerModel
+import com.vietjoke.vn.model.PassengerAdultModel
+import com.vietjoke.vn.model.PassengerChildModel
+import com.vietjoke.vn.model.PassengerInfantModel
 import com.vietjoke.vn.model.UserModel
 import com.vietjoke.vn.retrofit.ResponseDTO.AddonDTO
 import com.vietjoke.vn.retrofit.RetrofitInstance
@@ -216,6 +218,12 @@ fun InsuranceSelectionScreen() {
                     Spacer(Modifier.width(8.dp))
                     passengers.forEachIndexed { idx, pax ->
                         val isSelected = idx == currentPassengerIndex
+                        val (passengerType, firstName, lastName) = when (pax) {
+                            is PassengerAdultModel -> Triple("A", pax.firstName, pax.lastName)
+                            is PassengerChildModel -> Triple("C", pax.firstName, pax.lastName)
+                            is PassengerInfantModel -> Triple("I", pax.firstName, pax.lastName)
+                            else -> Triple("", "", "")
+                        }
                         Box(
                             modifier = Modifier
                                 .padding(horizontal = 4.dp)
@@ -227,7 +235,7 @@ fun InsuranceSelectionScreen() {
                                 .padding(horizontal = 12.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "${pax.passengerType.take(1)} ${pax.firstName.take(1)} ${pax.lastName.take(1)}",
+                                text = "$passengerType ${firstName.take(1)} ${lastName.take(1)}",
                                 color = if (isSelected) Color(0xFFD50000) else Color.White,
                                 fontWeight = FontWeight.Bold
                             )

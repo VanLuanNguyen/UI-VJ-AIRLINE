@@ -7,10 +7,10 @@ import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility // Thêm import này
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable // Thêm import này
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vietjoke.vn.R
 import com.vietjoke.vn.model.FlightBookingModel
-import com.vietjoke.vn.model.PassengerModel
+import com.vietjoke.vn.model.PassengerAdultModel
+import com.vietjoke.vn.model.PassengerChildModel
+import com.vietjoke.vn.model.PassengerInfantModel
 import java.text.SimpleDateFormat
 import java.util.*
 import com.vietjoke.vn.retrofit.RetrofitInstance
@@ -172,10 +174,10 @@ fun BookingScreen() {
             } else {
                 // Adult Passengers
                 if (FlightBookingModel.passengersAdult.isNotEmpty()) {
-                    PassengerSection( // Sử dụng PassengerSection đã được cập nhật
+                    PassengerSection(
                         title = "Adult Passengers",
                         icon = Icons.Default.Person,
-                        startExpanded = true // Bắt đầu mở rộng
+                        startExpanded = true
                     ) {
                         FlightBookingModel.passengersAdult.forEachIndexed { index, passenger ->
                             PassengerForm(
@@ -193,14 +195,14 @@ fun BookingScreen() {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp)) // Thêm khoảng cách giữa các Card
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Child Passengers
                 if (FlightBookingModel.passengersChild.isNotEmpty()) {
-                    PassengerSection( // Sử dụng PassengerSection đã được cập nhật
+                    PassengerSection(
                         title = "Child Passengers",
                         icon = Icons.Default.ChildCare,
-                        startExpanded = false // Bắt đầu thu gọn (hoặc true nếu muốn)
+                        startExpanded = false
                     ) {
                         FlightBookingModel.passengersChild.forEachIndexed { index, passenger ->
                             PassengerForm(
@@ -218,14 +220,14 @@ fun BookingScreen() {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp)) // Thêm khoảng cách giữa các Card
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Infant Passengers
                 if (FlightBookingModel.passengersInfant.isNotEmpty()) {
-                    PassengerSection( // Sử dụng PassengerSection đã được cập nhật
+                    PassengerSection(
                         title = "Infant Passengers",
                         icon = Icons.Default.ChildFriendly,
-                        startExpanded = false // Bắt đầu thu gọn (hoặc true nếu muốn)
+                        startExpanded = false
                     ) {
                         FlightBookingModel.passengersInfant.forEachIndexed { index, passenger ->
                             PassengerForm(
@@ -314,7 +316,7 @@ fun BookingScreen() {
                         "Submit Booking",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White // Thêm màu trắng cho chữ
+                        color = Color.White
                     )
                 }
             }
@@ -329,32 +331,28 @@ fun BookingScreen() {
 fun PassengerSection(
     title: String,
     icon: ImageVector,
-    startExpanded: Boolean = true, // Thêm tham số để kiểm soát trạng thái ban đầu
+    startExpanded: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    // State để theo dõi trạng thái mở rộng/thu gọn
     var isExpanded by remember { mutableStateOf(startExpanded) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-        // .padding(vertical = 8.dp) // Có thể bỏ padding ở đây và thêm Spacer giữa các Card
         ,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp) // Thêm độ nổi bật
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            // Thêm padding bên trong Card thay vì bên ngoài
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Hàng tiêu đề, có thể nhấp để mở rộng/thu gọn
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { isExpanded = !isExpanded } // Làm cho Row có thể nhấp
-                    .padding(vertical = 8.dp) // Thêm padding cho vùng nhấp
+                    .clickable { isExpanded = !isExpanded }
+                    .padding(vertical = 8.dp)
             ) {
                 Icon(
                     imageVector = icon,
@@ -368,9 +366,8 @@ fun PassengerSection(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF9C27B0),
-                    modifier = Modifier.weight(1f) // Cho phép tiêu đề chiếm không gian còn lại
+                    modifier = Modifier.weight(1f)
                 )
-                // Icon chỉ báo mở rộng/thu gọn
                 Icon(
                     imageVector = if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
                     contentDescription = if (isExpanded) "Collapse" else "Expand",
@@ -378,9 +375,7 @@ fun PassengerSection(
                 )
             }
 
-            // Nội dung có thể thu gọn/mở rộng với hiệu ứng animation
             AnimatedVisibility(visible = isExpanded) {
-                // Bọc nội dung trong Column để đảm bảo layout đúng khi có nhiều item
                 Column(modifier = Modifier.padding(top = 8.dp)) {
                     content()
                 }
@@ -395,74 +390,124 @@ fun PassengerSection(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PassengerForm(
-    passenger: PassengerModel,
+    passenger: Any,
     title: String,
     showAdditionalFields: Boolean,
     showAccompanyingAdult: Boolean = false
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    var countryCode by remember { mutableStateOf(passenger.countryCode) }
-    var countrySearchText by remember { mutableStateOf("") }  // Add this for search text
+    var countryCode by remember { mutableStateOf("") }
+    var countrySearchText by remember { mutableStateOf("") }
     var showCountryDropdown by remember { mutableStateOf(false) }
     var filteredCountries by remember { mutableStateOf(emptyList<CountryDTO>()) }
     val coroutineScope = rememberCoroutineScope()
-
-    // State variables for each field
-    var firstName by remember { mutableStateOf(passenger.firstName) }
-    var lastName by remember { mutableStateOf(passenger.lastName) }
-    var dateOfBirth by remember { mutableStateOf(passenger.dateOfBirth) }
-    var gender by remember { mutableStateOf(passenger.gender) }
-    // ---- ID Type State ----
-    val idTypes = listOf("DRIVER_LICENSE", "NATIONAL_ID", "OTHER", "PASSPORT")
-    var idType by remember { mutableStateOf(passenger.idType) }
-    var idTypeExpanded by remember { mutableStateOf(false) }
-    // -----------------------
-    var idNumber by remember { mutableStateOf(passenger.idNumber) }
-    var phone by remember { mutableStateOf(passenger.phone) }
-    var email by remember { mutableStateOf(passenger.email) }
-    var accompanyingAdultFirstName by remember { mutableStateOf(passenger.accompanyingAdultFirstName) }
-    var accompanyingAdultLastName by remember { mutableStateOf(passenger.accompanyingAdultLastName) }
+    val countries by countries.collectAsState()
 
     // Load countries when the form is first displayed
     LaunchedEffect(Unit) {
-        if (_countries.value.isEmpty()) {
+        coroutineScope.launch {
             loadCountries()
         }
     }
 
     // Update filtered countries when search text changes
-    LaunchedEffect(countrySearchText) {
-        filteredCountries = _countries.value.filter { country ->
-            country.countryName.contains(countrySearchText, ignoreCase = true) ||
-            country.countryEngName.contains(countrySearchText, ignoreCase = true)
+    LaunchedEffect(countrySearchText, countries) {
+        filteredCountries = if (countrySearchText.isBlank()) {
+            countries
+        } else {
+            countries.filter { country ->
+                country.countryName.contains(countrySearchText, ignoreCase = true)
+            }
+        }
+    }
+
+    // State variables for each field
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var dateOfBirth by remember { mutableStateOf("") }
+    var selectedGender by remember { mutableStateOf("MALE") }
+    var idType by remember { mutableStateOf("") }
+    var idTypeExpanded by remember { mutableStateOf(false) }
+    var idNumber by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var accompanyingAdultFirstName by remember { mutableStateOf("") }
+    var accompanyingAdultLastName by remember { mutableStateOf("") }
+
+    // Initialize state based on passenger type
+    LaunchedEffect(passenger) {
+        when (passenger) {
+            is PassengerAdultModel -> {
+                firstName = passenger.firstName
+                lastName = passenger.lastName
+                dateOfBirth = passenger.dateOfBirth
+                selectedGender = passenger.gender
+                countryCode = passenger.countryCode
+                idType = passenger.idType
+                idNumber = passenger.idNumber
+                phone = passenger.phone
+                email = passenger.email
+            }
+            is PassengerChildModel -> {
+                firstName = passenger.firstName
+                lastName = passenger.lastName
+                dateOfBirth = passenger.dateOfBirth
+                selectedGender = passenger.gender
+            }
+            is PassengerInfantModel -> {
+                firstName = passenger.firstName
+                lastName = passenger.lastName
+                dateOfBirth = passenger.dateOfBirth
+                selectedGender = passenger.gender
+                accompanyingAdultFirstName = passenger.accompanyingAdultFirstName
+                accompanyingAdultLastName = passenger.accompanyingAdultLastName
+            }
         }
     }
 
     // Update passenger model when state changes
-    LaunchedEffect(firstName) { passenger.firstName = firstName }
-    LaunchedEffect(lastName) { passenger.lastName = lastName }
-    LaunchedEffect(dateOfBirth) { passenger.dateOfBirth = dateOfBirth }
-    LaunchedEffect(gender) { passenger.gender = gender }
-    LaunchedEffect(countryCode) { passenger.countryCode = countryCode }
-    LaunchedEffect(idType) { passenger.idType = idType } // Update passenger model with selected ID Type
-    LaunchedEffect(idNumber) { passenger.idNumber = idNumber }
-    LaunchedEffect(phone) { passenger.phone = phone }
-    LaunchedEffect(email) { passenger.email = email }
-    LaunchedEffect(accompanyingAdultFirstName) { passenger.accompanyingAdultFirstName = accompanyingAdultFirstName }
-    LaunchedEffect(accompanyingAdultLastName) { passenger.accompanyingAdultLastName = accompanyingAdultLastName }
+    LaunchedEffect(firstName, lastName, dateOfBirth, selectedGender, countryCode, idType, idNumber, phone, email, accompanyingAdultFirstName, accompanyingAdultLastName) {
+        when (passenger) {
+            is PassengerAdultModel -> {
+                passenger.firstName = firstName
+                passenger.lastName = lastName
+                passenger.dateOfBirth = dateOfBirth
+                passenger.gender = selectedGender
+                passenger.countryCode = countryCode
+                passenger.idType = idType
+                passenger.idNumber = idNumber
+                passenger.phone = phone
+                passenger.email = email
+            }
+            is PassengerChildModel -> {
+                passenger.firstName = firstName
+                passenger.lastName = lastName
+                passenger.dateOfBirth = dateOfBirth
+                passenger.gender = selectedGender
+            }
+            is PassengerInfantModel -> {
+                passenger.firstName = firstName
+                passenger.lastName = lastName
+                passenger.dateOfBirth = dateOfBirth
+                passenger.gender = selectedGender
+                passenger.accompanyingAdultFirstName = accompanyingAdultFirstName
+                passenger.accompanyingAdultLastName = accompanyingAdultLastName
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 8.dp) // Chỉ cần padding bottom ở đây
+            .padding(bottom = 8.dp)
     ) {
         Text(
             text = title,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1A237E),
-            modifier = Modifier.padding(bottom = 12.dp, top=4.dp) // Điều chỉnh padding tiêu đề form
+            modifier = Modifier.padding(bottom = 12.dp, top=4.dp)
         )
 
         // First Name
@@ -506,7 +551,7 @@ fun PassengerForm(
         // Date of Birth
         OutlinedTextField(
             value = dateOfBirth,
-            onValueChange = {}, // ReadOnly
+            onValueChange = {},
             label = { Text("Date of Birth") },
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = {
@@ -545,7 +590,6 @@ fun PassengerForm(
                 calendar.get(Calendar.MONTH),
                 calendar.get(Calendar.DAY_OF_MONTH)
             )
-            // datePickerDialog.datePicker.maxDate = Calendar.getInstance().timeInMillis // Uncomment if needed
             datePickerDialog.setOnDismissListener { showDatePicker = false }
             datePickerDialog.show()
         }
@@ -554,51 +598,48 @@ fun PassengerForm(
 
         // Gender
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp), // Thêm chút padding
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 "Gender:",
-                modifier = Modifier.padding(end = 16.dp), // Tăng khoảng cách
+                modifier = Modifier.padding(end = 16.dp),
                 color = Color(0xFF1A237E),
-                fontSize = 14.sp // Giảm cỡ chữ label một chút
+                fontSize = 14.sp
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(
-                    selected = gender == "MALE",
-                    onClick = { gender = "MALE" },
-                    colors = RadioButtonDefaults.colors(
-                        selectedColor = Color(0xFF9C27B0),
-                        unselectedColor = Color(0xFF757575) // Màu xám nhạt hơn khi chưa chọn
-                    )
-                )
-                // Nhấp vào Text cũng chọn RadioButton
-                Text(
-                    "Male",
-                    modifier = Modifier.clickable { gender = "MALE" }.padding(end = 16.dp),
-                    color = Color(0xFF1A237E)
-                )
-                RadioButton(
-                    selected = gender == "FEMALE",
-                    onClick = { gender = "FEMALE" },
+                    selected = selectedGender == "MALE",
+                    onClick = { selectedGender = "MALE" },
                     colors = RadioButtonDefaults.colors(
                         selectedColor = Color(0xFF9C27B0),
                         unselectedColor = Color(0xFF757575)
                     )
                 )
-                // Nhấp vào Text cũng chọn RadioButton
+                Text(
+                    "Male",
+                    modifier = Modifier.clickable { selectedGender = "MALE" }.padding(end = 16.dp),
+                    color = Color(0xFF1A237E)
+                )
+                RadioButton(
+                    selected = selectedGender == "FEMALE",
+                    onClick = { selectedGender = "FEMALE" },
+                    colors = RadioButtonDefaults.colors(
+                        selectedColor = Color(0xFF9C27B0),
+                        unselectedColor = Color(0xFF757575)
+                    )
+                )
                 Text(
                     "Female",
-                    modifier = Modifier.clickable { gender = "FEMALE" },
+                    modifier = Modifier.clickable { selectedGender = "FEMALE" },
                     color = Color(0xFF1A237E)
                 )
             }
         }
 
-        if (showAdditionalFields) { // Fields specific to Adults
-            Spacer(modifier = Modifier.height(8.dp)) // Thêm Spacer trước nhóm field này
+        if (showAdditionalFields) {
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Country Code with autocomplete
             Box(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = countrySearchText,
@@ -622,21 +663,20 @@ fun PassengerForm(
                     singleLine = true
                 )
 
-                // Dropdown for country suggestions
                 if (showCountryDropdown && filteredCountries.isNotEmpty()) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(max = 200.dp)
                             .offset(y = 56.dp)
-                            .zIndex(1f), // Đảm bảo hiển thị trên các phần tử khác
+                            .zIndex(1f),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.White.copy(alpha = 0.95f) // Thêm độ đục
+                            containerColor = Color.White.copy(alpha = 0.95f)
                         ),
                         elevation = CardDefaults.cardElevation(
-                            defaultElevation = 8.dp // Tăng độ nổi
+                            defaultElevation = 8.dp
                         ),
-                        shape = RoundedCornerShape(8.dp) // Thêm bo góc
+                        shape = RoundedCornerShape(8.dp)
                     ) {
                         LazyColumn {
                             items(filteredCountries) { country ->
@@ -666,7 +706,6 @@ fun PassengerForm(
                 }
             }
 
-            // Thêm click listener cho toàn bộ màn hình để ẩn dropdown khi click ra ngoài
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -680,18 +719,17 @@ fun PassengerForm(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // --- ID Type Dropdown ---
             ExposedDropdownMenuBox(
                 expanded = idTypeExpanded,
                 onExpandedChange = { idTypeExpanded = !idTypeExpanded },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
-                    value = idType.replace("_", " "), // Hiển thị giá trị dễ đọc hơn
+                    value = idType.replace("_", " "),
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("ID Type") },
-                    leadingIcon = { // Thêm icon gợi ý
+                    leadingIcon = {
                         Icon(Icons.Default.CreditCard, contentDescription = null)
                     },
                     trailingIcon = {
@@ -710,6 +748,7 @@ fun PassengerForm(
                     expanded = idTypeExpanded,
                     onDismissRequest = { idTypeExpanded = false }
                 ) {
+                    val idTypes = listOf("DRIVER_LICENSE", "NATIONAL_ID", "OTHER", "PASSPORT")
                     idTypes.forEach { selectionOption ->
                         DropdownMenuItem(
                             text = { Text(selectionOption.replace("_", " ")) },
@@ -722,17 +761,15 @@ fun PassengerForm(
                     }
                 }
             }
-            // ------------------------
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // ID Number
             OutlinedTextField(
                 value = idNumber,
                 onValueChange = { idNumber = it },
                 label = { Text("ID Number") },
                 modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { // Thêm icon gợi ý
+                leadingIcon = {
                     Icon(Icons.Default.Badge, contentDescription = null)
                 },
                 colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -745,7 +782,6 @@ fun PassengerForm(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Phone
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
@@ -764,7 +800,6 @@ fun PassengerForm(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Email
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -782,23 +817,22 @@ fun PassengerForm(
             )
         }
 
-        if (showAccompanyingAdult) { // Fields specific to Infants
+        if (showAccompanyingAdult) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Accompanying Adult",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1A237E),
-                modifier = Modifier.padding(bottom = 8.dp) // Thêm padding bottom
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // Accompanying Adult First Name
             OutlinedTextField(
                 value = accompanyingAdultFirstName,
                 onValueChange = { accompanyingAdultFirstName = it },
                 label = { Text("Accompanying Adult First Name") },
                 modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { // Thêm icon gợi ý
+                leadingIcon = {
                     Icon(Icons.Default.PersonOutline, contentDescription = null)
                 },
                 colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -811,13 +845,12 @@ fun PassengerForm(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Accompanying Adult Last Name
             OutlinedTextField(
                 value = accompanyingAdultLastName,
                 onValueChange = { accompanyingAdultLastName = it },
                 label = { Text("Accompanying Adult Last Name") },
                 modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { // Thêm icon gợi ý
+                leadingIcon = {
                     Icon(Icons.Default.PersonOutline, contentDescription = null)
                 },
                 colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -833,7 +866,6 @@ fun PassengerForm(
 
 private val _countries = MutableStateFlow<List<CountryDTO>>(emptyList())
 val countries: StateFlow<List<CountryDTO>> = _countries.asStateFlow()
-
 private suspend fun loadCountries() {
     try {
         val response = RetrofitInstance.countryApi.getCountries()
@@ -853,6 +885,7 @@ private suspend fun loadCountries() {
     }
 }
 
+
 private fun validatePassengers(): String? {
     // Validate Adult Passengers
     FlightBookingModel.passengersAdult.forEachIndexed { index, passenger ->
@@ -865,10 +898,6 @@ private fun validatePassengers(): String? {
         if (passenger.idType.isBlank()) return "$passengerLabel: ID Type is required."
         if (passenger.idNumber.isBlank()) return "$passengerLabel: ID Number is required."
         if (passenger.phone.isBlank()) return "$passengerLabel: Phone is required."
-        // Basic phone number validation (example: must contain only digits and be a certain length)
-        // if (!passenger.phone.all { it.isDigit() } || passenger.phone.length < 9) {
-        //     return "$passengerLabel: Invalid Phone number format."
-        // }
         if (passenger.email.isBlank()) return "$passengerLabel: Email is required."
         if (!Patterns.EMAIL_ADDRESS.matcher(passenger.email).matches()) {
             return "$passengerLabel: Invalid Email format."
@@ -896,5 +925,5 @@ private fun validatePassengers(): String? {
     }
 
     Log.d("Validation", "All passengers validated successfully.")
-    return null // Return null if all validations pass
+    return null
 }

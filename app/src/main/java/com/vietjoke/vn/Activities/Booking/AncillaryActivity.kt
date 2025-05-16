@@ -45,6 +45,9 @@ import com.vietjoke.vn.Activities.Preview.PreviewActivity
 import com.vietjoke.vn.model.FlightBookingModel
 import com.vietjoke.vn.model.SeatSelectionResult
 import com.vietjoke.vn.model.LuggageSelectionResult
+import com.vietjoke.vn.model.PassengerAdultModel
+import com.vietjoke.vn.model.PassengerChildModel
+import com.vietjoke.vn.model.PassengerInfantModel
 import com.vietjoke.vn.model.UserModel
 import com.vietjoke.vn.retrofit.ResponseDTO.AddonBookingItem
 import com.vietjoke.vn.retrofit.ResponseDTO.BookAddonsRequest
@@ -514,10 +517,34 @@ fun AncillaryScreen(
                                     fontSize = 15.sp
                                 )
                                 leg.itemsByPassengerIndex.forEach { (passengerIndex, items) ->
-                                    val passenger = (FlightBookingModel.passengersAdult + FlightBookingModel.passengersChild).getOrNull(passengerIndex)
+                                    val passenger = when {
+                                        passengerIndex < FlightBookingModel.passengersAdult.size -> 
+                                            FlightBookingModel.passengersAdult[passengerIndex]
+                                        passengerIndex < FlightBookingModel.passengersAdult.size + FlightBookingModel.passengersChild.size ->
+                                            FlightBookingModel.passengersChild[passengerIndex - FlightBookingModel.passengersAdult.size]
+                                        else -> null
+                                    }
                                     passenger?.let {
+                                        val passengerType = when (it) {
+                                            is PassengerAdultModel -> "A"
+                                            is PassengerChildModel -> "C"
+                                            is PassengerInfantModel -> "I"
+                                            else -> ""
+                                        }
+                                        val firstName = when (it) {
+                                            is PassengerAdultModel -> it.firstName
+                                            is PassengerChildModel -> it.firstName
+                                            is PassengerInfantModel -> it.firstName
+                                            else -> ""
+                                        }
+                                        val lastName = when (it) {
+                                            is PassengerAdultModel -> it.lastName
+                                            is PassengerChildModel -> it.lastName
+                                            is PassengerInfantModel -> it.lastName
+                                            else -> ""
+                                        }
                                         Text(
-                                            "${it.passengerType.take(1)} ${it.firstName.take(1)} ${it.lastName.take(1)}:",
+                                            "$passengerType ${firstName.take(1)} ${lastName.take(1)}:",
                                             fontSize = 14.sp,
                                             color = Color.Gray
                                         )
@@ -556,10 +583,34 @@ fun AncillaryScreen(
                                     fontSize = 15.sp
                                 )
                                 leg.itemsByPassengerIndex.forEach { (passengerIndex, items) ->
-                                    val passenger = (FlightBookingModel.passengersAdult + FlightBookingModel.passengersChild).getOrNull(passengerIndex)
+                                    val passenger = when {
+                                        passengerIndex < FlightBookingModel.passengersAdult.size -> 
+                                            FlightBookingModel.passengersAdult[passengerIndex]
+                                        passengerIndex < FlightBookingModel.passengersAdult.size + FlightBookingModel.passengersChild.size ->
+                                            FlightBookingModel.passengersChild[passengerIndex - FlightBookingModel.passengersAdult.size]
+                                        else -> null
+                                    }
                                     passenger?.let {
+                                        val passengerType = when (it) {
+                                            is PassengerAdultModel -> "A"
+                                            is PassengerChildModel -> "C"
+                                            is PassengerInfantModel -> "I"
+                                            else -> ""
+                                        }
+                                        val firstName = when (it) {
+                                            is PassengerAdultModel -> it.firstName
+                                            is PassengerChildModel -> it.firstName
+                                            is PassengerInfantModel -> it.firstName
+                                            else -> ""
+                                        }
+                                        val lastName = when (it) {
+                                            is PassengerAdultModel -> it.lastName
+                                            is PassengerChildModel -> it.lastName
+                                            is PassengerInfantModel -> it.lastName
+                                            else -> ""
+                                        }
                                         Text(
-                                            "${it.passengerType.take(1)} ${it.firstName.take(1)} ${it.lastName.take(1)}:",
+                                            "$passengerType ${firstName.take(1)} ${lastName.take(1)}:",
                                             fontSize = 14.sp,
                                             color = Color.Gray
                                         )
@@ -713,7 +764,12 @@ fun AncillaryScreen(
                                             authorization = UserModel.token ?: "",
                                             sessionToken = sessionToken,
                                             flightNumber = flightNumber,
-                                            passengerUuid = passenger.uuid,
+                                            passengerUuid = when (passenger) {
+                                                is PassengerAdultModel -> passenger.uuid
+                                                is PassengerChildModel -> passenger.uuid
+                                                is PassengerInfantModel -> passenger.uuid
+                                                else -> ""
+                                            },
                                             addons = addons.map { AddonBookingItem(it.addonId, it.quantity) }
                                         )
 
@@ -776,8 +832,6 @@ fun AncillaryScreen(
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
-
-
         }
     }
 }
@@ -789,45 +843,43 @@ fun AncillaryOptionItem(
     title: String,
     subtitle: String?,
     price: String?,
-    details: @Composable (() -> Unit)?, // Composable cho phần chi tiết phụ
+    details: @Composable (() -> Unit)?,
     onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp)) // Bo góc nhẹ
-            .clickable(onClick = onClick), // Click vào cả Card
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White), // Nền trắng
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp) // Độ nổi nhẹ
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp), // Padding bên trong Card
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon Background + Icon
             Box(
                 modifier = Modifier
-                    .size(48.dp) // Kích thước ô chứa icon
-                    .clip(CircleShape) // Bo tròn
+                    .size(48.dp)
+                    .clip(CircleShape)
                     .background(iconBackgroundColor),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = title, // Mô tả icon
-                    tint = Color(0xFF9C27B0), // Màu icon chính (tím)
-                    modifier = Modifier.size(28.dp) // Kích thước icon
+                    contentDescription = title,
+                    tint = Color(0xFF9C27B0),
+                    modifier = Modifier.size(28.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp)) // Khoảng cách giữa icon và text
+            Spacer(modifier = Modifier.width(16.dp))
 
-            // Column for Text Content
             Column(
-                modifier = Modifier.weight(1f), // Chiếm không gian còn lại
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
@@ -835,10 +887,9 @@ fun AncillaryOptionItem(
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = Color.Black,
-                    maxLines = 1, // Chỉ hiện 1 dòng
-                    overflow = TextOverflow.Ellipsis // Thêm dấu ... nếu quá dài
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                // Hiển thị subtitle nếu có
                 subtitle?.let {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -849,32 +900,29 @@ fun AncillaryOptionItem(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                // Hiển thị details nếu có
                 details?.let {
                     Spacer(modifier = Modifier.height(4.dp))
-                    it() // Gọi Composable chi tiết
+                    it()
                 }
             }
 
-            Spacer(modifier = Modifier.width(8.dp)) // Khoảng cách trước giá (nếu có)
+            Spacer(modifier = Modifier.width(8.dp))
 
-            // Price (nếu có)
             price?.let {
                 Text(
                     text = it,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = Color.Red, // Màu đỏ cho giá
-                    modifier = Modifier.padding(start = 8.dp) // Padding thêm nếu có giá
+                    color = Color.Red,
+                    modifier = Modifier.padding(start = 8.dp)
                 )
             }
 
-            // Chevron Icon
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos, // Icon mũi tên qua phải
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = "Select option",
-                tint = Color.Gray, // Màu xám nhạt
-                modifier = Modifier.size(16.dp).padding(start = 8.dp) // Tăng padding bên trái icon
+                tint = Color.Gray,
+                modifier = Modifier.size(16.dp).padding(start = 8.dp)
             )
         }
     }

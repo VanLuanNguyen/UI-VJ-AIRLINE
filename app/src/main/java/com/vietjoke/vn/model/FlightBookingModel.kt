@@ -30,11 +30,10 @@ object FlightBookingModel {
         seatAssignmentsPerFlight = emptyMap()
     }
 
-    // Danh sách hành khách (giữ nguyên cấu trúc SnapshotStateList)
-    val passengersAdult: SnapshotStateList<PassengerModel> = mutableStateListOf()
-    val passengersChild: SnapshotStateList<PassengerModel> = mutableStateListOf()
-    val passengersInfant: SnapshotStateList<PassengerModel> = mutableStateListOf()
-
+    // Danh sách hành khách với các model mới
+    val passengersAdult: SnapshotStateList<PassengerAdultModel> = mutableStateListOf()
+    val passengersChild: SnapshotStateList<PassengerChildModel> = mutableStateListOf()
+    val passengersInfant: SnapshotStateList<PassengerInfantModel> = mutableStateListOf()
 
     // --- CẬP NHẬT HÀM CLEAR ---
     fun clear() {
@@ -58,7 +57,7 @@ object FlightBookingModel {
         clearSeats()
     }
 
-    // Hàm initializePassengers giữ nguyên logic
+    // Hàm initializePassengers với các model mới
     fun initializePassengers() {
         // Giả sử PassengerCountModel tồn tại
         val adultCount = PassengerCountModel.adultCount
@@ -70,13 +69,13 @@ object FlightBookingModel {
         passengersInfant.clear()
 
         repeat(adultCount) {
-            passengersAdult.add(PassengerModel(passengerType = "ADULT"))
+            passengersAdult.add(PassengerAdultModel())
         }
         repeat(childCount) {
-            passengersChild.add(PassengerModel(passengerType = "CHILD"))
+            passengersChild.add(PassengerChildModel())
         }
         repeat(infantCount) {
-            passengersInfant.add(PassengerModel(passengerType = "INFANT"))
+            passengersInfant.add(PassengerInfantModel())
         }
     }
 }

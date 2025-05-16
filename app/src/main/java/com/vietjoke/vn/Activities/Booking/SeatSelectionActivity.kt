@@ -41,8 +41,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vietjoke.vn.model.FlightBookingModel
-import com.vietjoke.vn.model.PassengerModel
-// Đảm bảo bạn đã import các data class này (đã định nghĩa ở các bước trước)
+import com.vietjoke.vn.model.PassengerAdultModel
+import com.vietjoke.vn.model.PassengerChildModel
+import com.vietjoke.vn.model.PassengerInfantModel
 import com.vietjoke.vn.model.SeatSelectionResult
 import com.vietjoke.vn.model.SelectedSeatInfoForLeg
 import com.vietjoke.vn.model.UserModel
@@ -71,7 +72,7 @@ class SeatSelectionActivity : ComponentActivity() {
 
         val adults = FlightBookingModel.passengersAdult.toList()
         val children = FlightBookingModel.passengersChild.toList()
-        val allPassengers = adults + children // Chỉ lấy adults và children như code gốc của bạn
+        val allPassengers = (adults + children) as List<Any> // Cast to List<Any> to handle both types
 
         var initialErrorMessage: String? = null
 
@@ -281,7 +282,7 @@ fun SeatLegend() {
 fun SeatSelectionScreen_Sequential(
     seatData: SeatSelectionData?,
     isRoundTrip: Boolean,
-    passengers: List<PassengerModel>,
+    passengers: List<Any>, // Change type to List<Any> to accept both adult and child passengers
     initialErrorMessage: String? = null
 ) {
     val context = LocalContext.current
@@ -372,12 +373,18 @@ fun SeatSelectionScreen_Sequential(
     // --- Hàm Helper để gọi API Release Seat ---
     suspend fun releaseSeatInternal(
         seatToRelease: String,
-        passenger: PassengerModel?,
+        passenger: Any?, // Change to Any? to accept both types
         flightNumber: String,
         sessionToken: String?,
         onResult: (success: Boolean, message: String?) -> Unit
     ) {
-        if (passenger?.uuid == null || sessionToken == null) {
+        val passengerUuid = when (passenger) {
+            is PassengerAdultModel -> passenger.uuid
+            is PassengerChildModel -> passenger.uuid
+            else -> null
+        }
+
+        if (passengerUuid == null || sessionToken == null) {
             Log.e("SequentialSeat", "Release failed: Invalid passenger UUID or session token.")
             onResult(false, "Thông tin hành khách hoặc phiên không hợp lệ.")
             return
@@ -387,7 +394,7 @@ fun SeatSelectionScreen_Sequential(
         val request = ReserveSeatRequest(
             flightNumber = flightNumber,
             seatNumber = seatToRelease,
-            passengerUUID = passenger.uuid,
+            passengerUUID = passengerUuid,
             sessionToken = sessionToken
         )
         Log.i("SequentialSeat", "Gọi API hủy ghế: $request")
@@ -529,9 +536,14 @@ fun SeatSelectionScreen_Sequential(
                                         style = MaterialTheme.typography.labelMedium, // Label nhỏ hơn
                                         color = themeColors.onSurfaceVariant
                                     )
+                                    val (firstName, lastName) = when (currentPassenger) {
+                                        is PassengerAdultModel -> Pair(currentPassenger.firstName, currentPassenger.lastName)
+                                        is PassengerChildModel -> Pair(currentPassenger.firstName, currentPassenger.lastName)
+                                        else -> Pair("", "")
+                                    }
                                     Text(
                                         // Tên hành khách to và rõ hơn
-                                        text = "${currentPassenger.firstName} ${currentPassenger.lastName}",
+                                        text = "$firstName $lastName",
                                         style = MaterialTheme.typography.titleMedium, // Dùng titleMedium
                                         fontWeight = FontWeight.SemiBold // Đậm vừa phải
                                     )
@@ -690,8 +702,12 @@ fun SeatSelectionScreen_Sequential(
                     // --- NÚT CHÍNH ---
                     Button(
                         onClick = {
-                            val passengerUUID = currentPassenger.uuid
-                            if (currentSessionToken == null || passengerUUID == null) { /*...*/ return@Button
+                            val passengerUuid = when (currentPassenger) {
+                                is PassengerAdultModel -> currentPassenger.uuid
+                                is PassengerChildModel -> currentPassenger.uuid
+                                else -> null
+                            }
+                            if (currentSessionToken == null || passengerUuid == null) { /*...*/ return@Button
                             }
 
                             isLoading = true
@@ -727,7 +743,7 @@ fun SeatSelectionScreen_Sequential(
                                         val request = ReserveSeatRequest(
                                             flightNumber = currentFlightNumber,
                                             seatNumber = seatSelectedTemporarily,
-                                            passengerUUID = passengerUUID,
+                                            passengerUUID = passengerUuid,
                                             sessionToken = currentSessionToken!!
                                         )
                                         val response = RetrofitInstance.seatApi.reserveSeat(
@@ -829,8 +845,8 @@ fun SeatSelectionScreen_Sequential(
 @Composable
 fun SeatSelectionScreen_Sequential_Preview() {
     val adults = listOf(
-        PassengerModel(passengerType = "ADULT", firstName = "An", lastName = "Nguyen", uuid = "uuid-an"),
-        PassengerModel(passengerType = "ADULT", firstName = "Binh", lastName = "Le", uuid = "uuid-binh")
+        PassengerAdultModel(firstName = "An", lastName = "Nguyen", uuid = "uuid-an"),
+        PassengerAdultModel(firstName = "Binh", lastName = "Le", uuid = "uuid-binh")
     )
     val route1 = RouteDTO(originAirport = AirportDTO("SGN", "SGN"), destinationAirport = AirportDTO("HAN", "HAN"))
     val route2 = RouteDTO(originAirport = AirportDTO("HAN", "HAN"), destinationAirport = AirportDTO("SGN", "SGN"))
